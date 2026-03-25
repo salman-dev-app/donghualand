@@ -305,59 +305,110 @@ window.tmdbSearch = async function() {
 window.tmdbSelect = async function(tmdbId) {
   showToast('Fetching anime data from TMDB...', 'info');
   try {
-    // Server uses its own TMDB_API_KEY secret - returns English data
+    // Server uses its own TMDB_API_KEY secret - always returns English data
     const r = await fetch(`/api/tmdb/tv/${tmdbId}`, { headers: headers() });
     const d = await r.json();
-    if (d.error) { showToast(d.error, 'error'); return; }
-    if (d.title) {
-      // Fill all basic fields from TMDB
-      setVal('fTitle', d.title);
-      setVal('fTitleNative', d.title_native || '');
-      setVal('fTitleEnglish', d.title_english || d.title || '');
-      setVal('fSlug', slugify(d.title));
-      setVal('fDescription', d.description || '');
-      setVal('fCoverImage', d.cover_image || '');
-      setVal('fBannerImage', d.banner_image || '');
-      setVal('fTrailer', d.trailer_url || '');
-      setVal('fRating', d.rating ? String(d.rating) : '');
-      setVal('fYear', d.release_year ? String(d.release_year) : '');
-      setVal('fStatus', d.status || 'Ongoing');
-      // Type from TMDB
-      if (d.type) setVal('fType', d.type);
-      // Country
-      if (d.country) setVal('fCountry', d.country);
-      // Genres (array of English genre names)
-      if (d.genres && d.genres.length > 0) {
-        setVal('fGenres', Array.isArray(d.genres) ? d.genres.join(', ') : d.genres);
-      }
-      // Studios / production companies
-      if (d.studios && d.studios.length > 0) {
-        setVal('fStudios', Array.isArray(d.studios) ? d.studios.join(', ') : d.studios);
-      }
-      // Duration hint if available (from episode runtime)
-      // Preview images
-      previewImg('fCoverImage', 'prevCover');
-      previewImg('fBannerImage', 'prevBanner');
+    if (d.error) { showToast('TMDB Error: ' + d.error, 'error'); return; }
+    if (!d.title && !d.tmdb_id) { showToast('No data returned from TMDB', 'error'); return; }
 
-      // Show summary of what was filled
-      const filled = [];
-      if (d.title) filled.push('Title');
-      if (d.title_native) filled.push('Native Title');
-      if (d.description) filled.push('Description');
-      if (d.cover_image) filled.push('Cover Image');
-      if (d.banner_image) filled.push('Banner Image');
-      if (d.trailer_url) filled.push('Trailer');
-      if (d.genres && d.genres.length) filled.push('Genres');
-      if (d.studios && d.studios.length) filled.push('Studios');
+    const filled = [];
 
-      showToast('✓ TMDB auto-filled: ' + filled.join(', '), 'success');
-      document.getElementById('tmdbResults').innerHTML = '';
-      // Scroll down to the form
-      const formEl = document.querySelector('#admin-add-anime .form-section-title');
-      if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      showToast('No data returned from TMDB', 'error');
+    // ---- Title (English) ----
+    const englishTitle = d.title_english || d.title || '';
+    setVal('fTitle', englishTitle);
+    if (englishTitle) filled.push('Title');
+
+    // ---- Native Title (Chinese/Japanese original) ----
+    setVal('fTitleNative', d.title_native || '');
+    if (d.title_native) filled.push('Native Title');
+
+    // ---- English Title explicitly ----
+    setVal('fTitleEnglish', d.title_english || d.title || '');
+    if (d.title_english) filled.push('English Title');
+
+    // ---- Slug (auto-generated from English title) ----
+    if (englishTitle) {
+      setVal('fSlug', slugify(englishTitle));
+      filled.push('Slug');
     }
+
+    // ---- Description (English) ----
+    if (d.description) {
+      setVal('fDescription', d.description);
+      filled.push('Description');
+    }
+
+    // ---- Cover Image ----
+    if (d.cover_image) {
+      setVal('fCoverImage', d.cover_image);
+      filled.push('Cover Image');
+    }
+
+    // ---- Banner Image ----
+    if (d.banner_image) {
+      setVal('fBannerImage', d.banner_image);
+      filled.push('Banner Image');
+    }
+
+    // ---- Trailer URL ----
+    if (d.trailer_url) {
+      setVal('fTrailer', d.trailer_url);
+      filled.push('Trailer');
+    }
+
+    // ---- Rating ----
+    if (d.rating) {
+      setVal('fRating', String(d.rating));
+      filled.push('Rating (' + d.rating + ')');
+    }
+
+    // ---- Year ----
+    if (d.release_year) {
+      setVal('fYear', String(d.release_year));
+      filled.push('Year');
+    }
+
+    // ---- Status ----
+    setVal('fStatus', d.status || 'Ongoing');
+    filled.push('Status');
+
+    // ---- Type ----
+    setVal('fType', d.type || 'ONA');
+    filled.push('Type');
+
+    // ---- Country ----
+    setVal('fCountry', d.country || 'China');
+    filled.push('Country');
+
+    // ---- Duration (episode runtime) ----
+    if (d.duration) {
+      setVal('fDuration', d.duration);
+      filled.push('Duration');
+    }
+
+    // ---- Genres (English names) ----
+    if (d.genres && d.genres.length > 0) {
+      setVal('fGenres', Array.isArray(d.genres) ? d.genres.join(', ') : d.genres);
+      filled.push('Genres');
+    }
+
+    // ---- Studios / Production Companies ----
+    if (d.studios && d.studios.length > 0) {
+      setVal('fStudios', Array.isArray(d.studios) ? d.studios.join(', ') : d.studios);
+      filled.push('Studios');
+    }
+
+    // ---- Preview images ----
+    previewImg('fCoverImage', 'prevCover');
+    previewImg('fBannerImage', 'prevBanner');
+
+    // ---- Success message ----
+    showToast('✓ TMDB filled: ' + filled.join(', '), 'success');
+    document.getElementById('tmdbResults').innerHTML = '';
+
+    // Scroll to the anime form
+    const formEl = document.getElementById('fTitle');
+    if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch(e) { showToast('Error fetching TMDB details: ' + e.message, 'error'); }
 };
 

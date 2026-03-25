@@ -129,7 +129,7 @@ tmdbRoutes.get('/tv/:id', async (c) => {
       }
     }
 
-    // Get studios
+    // Get studios (production companies)
     const studios = (detail.production_companies || []).map((c: any) => c.name)
 
     // Get genres in English
@@ -143,21 +143,38 @@ tmdbRoutes.get('/tv/:id', async (c) => {
       : countries.includes('HK') ? 'Hong Kong'
       : (countries[0] || 'China')
 
-    // Determine type
+    // Determine type based on TMDB type field
     let type = 'ONA'
-    if (detail.type === 'Miniseries') type = 'ONA'
-    else if (detail.type === 'Documentary') type = 'Special'
+    if (detail.type === 'Documentary') type = 'Special'
+    else if (detail.type === 'Miniseries') type = 'ONA'
     else if (detail.number_of_seasons === 1 && (detail.number_of_episodes || 0) <= 3) type = 'OVA'
     else if (detail.type === 'Scripted') type = 'TV'
     else type = 'ONA'
 
+    // Get episode runtime (duration in minutes)
+    // TMDB provides episode_run_time as array of runtimes
+    const runtimes = detail.episode_run_time || []
+    const duration = runtimes.length > 0
+      ? `${runtimes[0]} min`
+      : null
+
+    // Make sure main title is English - prefer the en-US detail.name
+    // When we request with language=en-US, TMDB returns the translated English title in detail.name
+    // For non-English shows, detail.name = English translation, detail.original_name = original script
+    const mainTitle = detail.name || detail.original_name
+
+    // Ensure English title is not null - always use at least detail.name
+    if (!titleEnglish) {
+      titleEnglish = detail.name || detail.original_name
+    }
+
     const transformed = {
       tmdb_id: detail.id,
-      // Main display title should be English
-      title: detail.name || detail.original_name,
-      // Native title (Chinese, Japanese, etc.)
+      // Main display title - ALWAYS English (TMDB returns en-US translated name)
+      title: mainTitle,
+      // Native title (Chinese, Japanese, etc.) - only original script
       title_native: nativeTitle,
-      // English title
+      // English title explicitly
       title_english: titleEnglish,
       // Description always in English
       description: description,
@@ -171,6 +188,8 @@ tmdbRoutes.get('/tv/:id', async (c) => {
       studios,
       country,
       type,
+      // Episode duration in minutes (e.g. "24 min")
+      duration,
       episode_count: detail.number_of_episodes || 0,
       seasons: detail.number_of_seasons || 1,
       status: mapTmdbStatus(detail.status),
