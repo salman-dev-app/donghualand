@@ -441,7 +441,15 @@ adminRoutes.get('/settings', requireAdmin, async (c) => {
   const db = c.env.DB
   try {
     const settings = await db.prepare('SELECT * FROM settings').all()
-    const result: Record<string, string> = {}
+    // Start with defaults
+    const result: Record<string, string> = {
+      site_name: 'DonghuaLand',
+      site_description: 'Watch Chinese Anime (Donghua) online for free in HD.',
+      contact_email: '',
+      registration_enabled: '1',
+      maintenance_mode: '0',
+    }
+    // Override with actual DB values
     settings.results.forEach((s: any) => { result[s.key] = s.value })
     return c.json({ success: true, data: result })
   } catch (e: any) { return c.json({ error: e.message }, 500) }

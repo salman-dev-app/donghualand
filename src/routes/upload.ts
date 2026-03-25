@@ -14,7 +14,7 @@ type Bindings = {
 
 export const uploadRoutes = new Hono<{ Bindings: Bindings }>()
 
-// Helper: generate Cloudinary signature
+// Helper: generate Cloudinary signature (uses SHA-1 as per Cloudinary docs)
 async function generateCloudinarySignature(
   params: Record<string, string>,
   apiSecret: string
@@ -25,7 +25,8 @@ async function generateCloudinarySignature(
 
   const encoder = new TextEncoder()
   const data = encoder.encode(stringToSign)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  // Cloudinary uses SHA-1 for signature by default
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
@@ -37,7 +38,8 @@ async function uploadToCloudinary(
   cloudName: string,
   apiKey: string,
   apiSecret: string,
-  publicId?: string
+  publicId?: string,
+  mimeType?: string
 ): Promise<{ url: string; public_id: string; width: number; height: number }> {
   const timestamp = String(Math.floor(Date.now() / 1000))
   
@@ -53,10 +55,14 @@ async function uploadToCloudinary(
   
   // imageData can be base64 string or ArrayBuffer
   if (typeof imageData === 'string') {
+    // base64 data URI or base64 string
     formData.append('file', imageData)
   } else {
-    const blob = new Blob([imageData])
-    formData.append('file', blob)
+    // ArrayBuffer - wrap in Blob with proper MIME type
+    const mime = mimeType || 'image/jpeg'
+    const ext = mime.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg'
+    const blob = new Blob([imageData], { type: mime })
+    formData.append('file', blob, `upload.${ext}`)
   }
   
   formData.append('api_key', apiKey)
@@ -71,11 +77,15 @@ async function uploadToCloudinary(
   })
 
   if (!response.ok) {
-    const err = await response.text()
-    throw new Error(`Cloudinary upload failed: ${err}`)
+    let errText = ''
+    try { errText = await response.text() } catch {}
+    throw new Error(`Cloudinary upload failed (${response.status}): ${errText}`)
   }
 
   const result = await response.json() as any
+  if (result.error) {
+    throw new Error(`Cloudinary error: ${result.error.message || JSON.stringify(result.error)}`)
+  }
   return {
     url: result.secure_url,
     public_id: result.public_id,
@@ -236,6 +246,7 @@ uploadRoutes.post('/admin', async (c) => {
     let folder = 'donghualand/admin'
     let uploadType = 'general'
 
+    let fileType = 'image/jpeg'
     if (contentType.includes('multipart/form-data')) {
       const formData = await c.req.formData()
       const file = formData.get('image') as File | null
@@ -245,6 +256,7 @@ uploadRoutes.post('/admin', async (c) => {
       
       // Get optional folder/type param
       uploadType = String(formData.get('type') || 'general')
+      fileType = file.type || 'image/jpeg'
       imageData = await file.arrayBuffer()
     } else {
       const body = await c.req.json()
@@ -263,7 +275,7 @@ uploadRoutes.post('/admin', async (c) => {
     folder = folderMap[uploadType] || 'donghualand/admin'
 
     const result = await uploadToCloudinary(
-      imageData, folder, cloudName, apiKey, apiSecret
+      imageData, folder, cloudName, apiKey, apiSecret, undefined, fileType
     )
 
     return c.json({

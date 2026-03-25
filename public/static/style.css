@@ -500,25 +500,27 @@ ul, ol { list-style: none; }
 /* ================================================================
    HERO SLIDER (HOME PAGE)
 ================================================================ */
-.hero-slider { position: relative; overflow: hidden; background: var(--bg); }
-.hero-slide { display: none; position: relative; }
+.hero-slider {
+  position: relative; overflow: hidden; background: var(--bg);
+}
+.hero-slide { display: none; position: relative; width: 100%; }
 .hero-slide.active { display: block; }
 .hero-bg-img {
-  width: 100%; height: 500px;
-  object-fit: cover; object-position: top center;
+  width: 100%; height: 520px;
+  object-fit: cover; object-position: center top;
   display: block;
 }
 .hero-gradient {
   position: absolute; inset: 0;
   background:
-    linear-gradient(90deg, rgba(10,10,15,0.97) 25%, rgba(10,10,15,0.6) 55%, transparent 100%),
-    linear-gradient(0deg, rgba(10,10,15,1) 0%, rgba(10,10,15,0.0) 35%);
+    linear-gradient(90deg, rgba(10,10,15,0.95) 30%, rgba(10,10,15,0.55) 60%, rgba(10,10,15,0.1) 100%),
+    linear-gradient(0deg, rgba(10,10,15,1) 0%, rgba(10,10,15,0.0) 40%);
 }
 .hero-content {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  max-width: 1440px; margin: 0 auto;
+  position: absolute; bottom: 0; left: 0;
+  width: 100%;
   padding: 0 48px 44px;
-  max-width: 620px;
+  max-width: 680px;
 }
 .hero-badges {
   display: flex; align-items: center; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
@@ -1562,10 +1564,11 @@ ul, ol { list-style: none; }
   .user-btn { padding: 4px 8px 4px 4px; gap: 4px; }
 
   /* Hero */
-  .hero-bg-img { height: 280px; }
+  .hero-bg-img { height: 320px; }
   .hero-content {
     padding: 0 16px 28px;
     max-width: 100%;
+    width: 100%;
   }
   .hero-title { font-size: 22px; }
   .hero-native { font-size: 13px; }
@@ -1663,7 +1666,7 @@ ul, ol { list-style: none; }
    RESPONSIVE — SMALL MOBILE (≤ 480px)
 ================================================================ */
 @media (max-width: 480px) {
-  .hero-bg-img { height: 240px; }
+  .hero-bg-img { height: 270px; }
   .hero-title { font-size: 19px; }
   .hero-btns { gap: 8px; }
   .btn-watch, .btn-info { padding: 8px 14px; font-size: 12px; }
