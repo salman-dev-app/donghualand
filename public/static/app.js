@@ -323,31 +323,44 @@ function initBroadcastBanner() {
   const banner = document.getElementById('broadcastBanner');
   if (!banner) return;
   fetch('/api/broadcasts/active')
-    .then(r => r.json())
-    .then(d => {
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
       if (!d.data || d.data.length === 0) return;
-      const typeStyles = {
+      var typeStyles = {
         info:    { bg: '#1a2a3a', border: 'rgba(52,152,219,0.5)', color: '#74b9ff', icon: 'fa-info-circle' },
         success: { bg: '#1a3a2a', border: 'rgba(0,208,132,0.5)',  color: '#00d084', icon: 'fa-check-circle' },
         warning: { bg: '#3a2a0a', border: 'rgba(241,196,15,0.5)', color: '#fdcb6e', icon: 'fa-exclamation-triangle' },
         error:   { bg: '#3a1a1a', border: 'rgba(232,64,64,0.5)',  color: '#e84040', icon: 'fa-times-circle' },
       };
       // Show the most recent active broadcast
-      const bc = d.data[0];
-      const ts = typeStyles[bc.type] || typeStyles.info;
-      banner.style.cssText = `
-        display:block; position:relative; z-index:500;
-        background:${ts.bg}; border-bottom:1px solid ${ts.border};
-        padding:10px 16px; text-align:center;
-      `;
-      banner.innerHTML = `
-        <div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">
-          <i class="fas ${ts.icon}" style="color:${ts.color};flex-shrink:0;"></i>
-          <span style="font-size:13px;color:${ts.color};font-weight:500;">${bc.message}</span>
-          <button onclick="this.closest('#broadcastBanner').style.display='none'" style="background:none;border:none;color:${ts.color};cursor:pointer;font-size:16px;padding:0 4px;margin-left:8px;opacity:0.7;" title="Dismiss">&times;</button>
-        </div>`;
+      var bc = d.data[0];
+      var ts = typeStyles[bc.type] || typeStyles.info;
+      // Apply styles
+      banner.style.display = 'block';
+      banner.style.position = 'relative';
+      banner.style.zIndex = '500';
+      banner.style.background = ts.bg;
+      banner.style.borderBottom = '1px solid ' + ts.border;
+      banner.style.padding = '10px 16px';
+      banner.style.textAlign = 'center';
+      // Build inner HTML — dismiss button uses getElementById to avoid closest() issues
+      var msg = bc.message.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      banner.innerHTML =
+        '<div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">' +
+          '<i class="fas ' + ts.icon + '" style="color:' + ts.color + ';flex-shrink:0;"></i>' +
+          '<span style="font-size:13px;color:' + ts.color + ';font-weight:500;">' + msg + '</span>' +
+          '<button id="broadcastDismiss" style="background:none;border:none;color:' + ts.color + ';cursor:pointer;font-size:18px;line-height:1;padding:0 4px;margin-left:8px;opacity:0.8;" title="Dismiss">&times;</button>' +
+        '</div>';
+      // Wire dismiss button
+      var dismissBtn = document.getElementById('broadcastDismiss');
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', function() {
+          var b = document.getElementById('broadcastBanner');
+          if (b) b.style.display = 'none';
+        });
+      }
     })
-    .catch(() => {});
+    .catch(function() {});
 }
 
 // ============ FOOTER SOCIAL LINKS ============

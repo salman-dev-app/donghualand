@@ -210,7 +210,7 @@ app.get('/', async (c) => {
       SELECT a.*, MAX(e.created_at) as latest_ep_date, MAX(e.episode_number) as latest_ep,
       COUNT(e.id) as total_eps
       FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id
-      GROUP BY a.id ORDER BY latest_ep_date DESC LIMIT 20
+      GROUP BY a.id ORDER BY latest_ep_date DESC LIMIT 10
     `).all()
 
     const popular = await db.prepare(`

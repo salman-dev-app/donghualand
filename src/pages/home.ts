@@ -192,7 +192,7 @@ ${recent.length > 0 ? `
       <a href="/search" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
     </div>
     <div class="recent-grid">
-      ${recent.slice(0, 12).map(a => recentItem(a)).join('')}
+      ${recent.slice(0, 10).map(a => recentItem(a)).join('')}
     </div>
   </div>
 </section>` : ''}

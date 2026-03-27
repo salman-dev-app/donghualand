@@ -502,8 +502,10 @@ ul, ol { list-style: none; }
 ================================================================ */
 .hero-slider {
   position: relative; overflow: hidden; background: var(--bg);
-  /* Fixed height so slides can use position:absolute without collapsing */
-  height: 520px;
+  /* Fill viewport minus header height on desktop */
+  height: calc(100vh - var(--hh));
+  max-height: 620px;
+  min-height: 420px;
   /* Prevent any layout that could cause double-display */
   display: block;
   contain: layout style;
@@ -751,7 +753,7 @@ section.hero-slider + section.hero-slider {
 /* ================================================================
    RECENTLY UPDATED (List style)
 ================================================================ */
-.recent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.recent-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
 .recent-item {
   display: flex; gap: 10px;
@@ -1601,7 +1603,7 @@ section.hero-slider + section.hero-slider {
   .user-btn { padding: 4px 8px 4px 4px; gap: 4px; }
 
   /* Hero */
-  .hero-slider { height: 320px; }
+  .hero-slider { height: 320px; max-height: 320px; min-height: 280px; }
   .hero-bg-img { height: 100%; }
   .hero-content {
     padding: 0 16px 28px;
@@ -1704,7 +1706,7 @@ section.hero-slider + section.hero-slider {
    RESPONSIVE — SMALL MOBILE (≤ 480px)
 ================================================================ */
 @media (max-width: 480px) {
-  .hero-slider { height: 270px; }
+  .hero-slider { height: 270px; max-height: 270px; min-height: 240px; }
   .hero-bg-img { height: 100%; }
   .hero-title { font-size: 19px; }
   .hero-btns { gap: 8px; }
