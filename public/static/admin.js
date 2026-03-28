@@ -466,32 +466,6 @@ window.handleImgUpload = async function(input, inputId, previewId, isBanner = fa
   input.value = '';
 };
 
-// Upload episode thumbnail to IMGBB
-window.handleEpThumbUpload = async function(input) {
-  const file = input.files[0];
-  if (!file) return;
-  showToast('Uploading thumbnail...', 'info');
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('type', 'thumbnail');
-    const res = await fetch('/api/upload/admin', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + getToken() },
-      body: formData
-    });
-    const data = await res.json();
-    if (data.success && data.url) {
-      setVal('epThumb', data.url);
-      previewImg('epThumb', 'epThumbPrev');
-      showToast('Thumbnail uploaded!', 'success');
-    } else {
-      showToast(data.error || 'Upload failed. Check IMGBB_API_KEY configuration.', 'error');
-    }
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
-  input.value = '';
-};
-
 window.handleVideoUpload = function(input) {
   const file = input.files[0];
   if (!file) return;
@@ -581,8 +555,7 @@ window.editEpisode = function(id, num, title, embed, video, airDate, membersOnly
 
 window.resetEpForm = function() {
   document.getElementById('epNum').value = '';
-  ['epTitle','epEmbed','epVideo','epThumb'].forEach(id => setVal(id, ''));
-  document.getElementById('epThumbPrev').style.display = 'none';
+  ['epTitle','epEmbed','epVideo'].forEach(id => setVal(id, ''));
   const btn = document.getElementById('addEpBtn');
   btn.dataset.editId = '';
   btn.innerHTML = '<i class="fas fa-plus"></i> Add Episode';
@@ -603,7 +576,7 @@ window.addEpisode = async function() {
       title: getVal('epTitle'),
       embed_url: getVal('epEmbed'),
       video_url: getVal('epVideo'),
-      thumbnail: getVal('epThumb'),
+      thumbnail: '',
       air_date: document.getElementById('epDate')?.value || null,
       is_members_only: getCheck('epMembers') ? 1 : 0
     };

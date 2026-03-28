@@ -56,8 +56,9 @@ export function animeCard(a: any): string {
 </a>`
 }
 
-export function episodeCard(ep: any, slug: string): string {
-  const thumb = ep.thumbnail || 'https://placehold.co/320x180/0f0f17/6c5ce7?text=EP+' + ep.episode_number
+export function episodeCard(ep: any, slug: string, animeCover?: string): string {
+  // Always use the anime cover image as thumbnail — no manual upload needed
+  const thumb = animeCover || 'https://placehold.co/320x180/0f0f17/6c5ce7?text=EP+' + ep.episode_number
   return `
 <a href="/watch/${slug}-episode-${ep.episode_number}" class="ep-card">
   <div class="ep-thumb">

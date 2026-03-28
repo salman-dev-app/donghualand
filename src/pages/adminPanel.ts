@@ -693,15 +693,6 @@ export function adminPanelPage(section: string = 'dashboard') {
           <div class="admin-fg"><label class="admin-lbl">Episode Title</label><input type="text" class="admin-inp" id="epTitle" placeholder="Optional title"></div>
           <div class="admin-fg full"><label class="admin-lbl">Embed URL (iframe src)</label><input type="text" class="admin-inp" id="epEmbed" placeholder="https://streamtape.com/e/... or any embed URL"></div>
           <div class="admin-fg full"><label class="admin-lbl">Direct Video URL (mp4)</label><input type="text" class="admin-inp" id="epVideo" placeholder="https://cdn.example.com/video.mp4"></div>
-          <div class="admin-fg">
-            <label class="admin-lbl">Thumbnail URL</label>
-            <input type="text" class="admin-inp" id="epThumb" placeholder="https://..." oninput="previewImg('epThumb','epThumbPrev')">
-            <img id="epThumbPrev" src="" style="width:120px;margin-top:6px;border-radius:6px;display:none;" alt="">
-            <div class="img-upload-area" style="margin-top:8px;" onclick="document.getElementById('epThumbFile').click()">
-              <i class="fas fa-image"></i><p>Upload thumbnail</p><span>Optional</span>
-            </div>
-            <input type="file" id="epThumbFile" accept="image/*" style="display:none" onchange="handleEpThumbUpload(this)">
-          </div>
           <div class="admin-fg"><label class="admin-lbl">Air Date</label><input type="date" class="admin-inp" id="epDate"></div>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px;">

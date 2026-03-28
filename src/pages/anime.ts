@@ -85,7 +85,7 @@ ${episodes.length > 0 ? `
     </div>
   </div>
   <div class="eps-grid" id="epsGrid">
-    ${episodes.map(ep => episodeCard(ep, anime.slug)).join('')}
+    ${episodes.map(ep => episodeCard(ep, anime.slug, anime.cover_image)).join('')}
   </div>
 </div>` : `
 <div class="eps-section">
