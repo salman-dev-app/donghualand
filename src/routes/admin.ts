@@ -479,6 +479,15 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   social_youtube: '',
   social_instagram: '',
   social_tiktok: '',
+  // Header branding (supports both text and image logo)
+  header_text: 'DonghuaLand',
+  header_size: 'medium',
+  header_style: 'bold',
+  header_color: '#a29bfe',
+  // Logo type: 'text' (styled text) or 'image' (image from URL)
+  logo_type: 'text',
+  logo_url: '',
+  logo_height: '36',
 }
 
 adminRoutes.get('/settings', requireAdmin, async (c) => {

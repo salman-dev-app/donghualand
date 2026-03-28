@@ -771,6 +771,26 @@ async function loadSettings() {
       // General
       setCheck('setRegistration', s.registration_enabled !== '0');
       setCheck('setMaintenance', s.maintenance_mode === '1');
+      // Logo type: 'text' or 'image'
+      const logoType = s.logo_type || 'text';
+      const logoTypeText = document.getElementById('logoTypeText');
+      const logoTypeImage = document.getElementById('logoTypeImage');
+      if (logoTypeText) logoTypeText.checked = (logoType === 'text');
+      if (logoTypeImage) logoTypeImage.checked = (logoType === 'image');
+      onLogoTypeChange();
+      // Image logo settings
+      setVal('setLogoUrl', s.logo_url || '');
+      setVal('setLogoHeight', s.logo_height || '36');
+      updateLogoPreview();
+      // Header & Branding (text logo)
+      setVal('setHeaderText', s.header_text || s.site_name || 'DonghuaLand');
+      setVal('setHeaderSize', s.header_size || 'medium');
+      setVal('setHeaderStyle', s.header_style || 'bold');
+      const headerColor = s.header_color || '#a29bfe';
+      setVal('setHeaderColorHex', headerColor);
+      const colorPicker = document.getElementById('setHeaderColor');
+      if (colorPicker) colorPicker.value = headerColor;
+      updateHeaderPreview();
       // Emails
       setVal('setContactEmail', s.contact_email || '');
       setVal('setDmcaEmail', s.dmca_email || '');
@@ -790,7 +810,151 @@ async function loadSettings() {
 
   // Load broadcasts
   loadBroadcasts();
+  
+  // Setup header preview live updates
+  setupHeaderPreviewListeners();
 }
+
+// ====== LOGO TYPE TOGGLE ======
+window.onLogoTypeChange = function() {
+  const imageRadio = document.getElementById('logoTypeImage');
+  const isImage = imageRadio && imageRadio.checked;
+  const imageSection = document.getElementById('logoImageSection');
+  const textSection = document.getElementById('logoTextSection');
+  const imageLbl = document.getElementById('logoTypeImageLabel');
+  const textLbl = document.getElementById('logoTypeTextLabel');
+  if (imageSection) imageSection.style.display = isImage ? 'block' : 'none';
+  if (textSection) textSection.style.display = isImage ? 'none' : 'block';
+  if (imageLbl) imageLbl.style.borderColor = isImage ? 'var(--purple)' : 'var(--border2)';
+  if (textLbl) textLbl.style.borderColor = isImage ? 'var(--border2)' : 'var(--purple)';
+};
+
+// ====== LOGO IMAGE PREVIEW ======
+window.updateLogoPreview = function() {
+  const url = getVal('setLogoUrl');
+  const preview = document.getElementById('logoImgPreview');
+  const empty = document.getElementById('logoImgPreviewEmpty');
+  if (preview && empty) {
+    if (url && url.trim()) {
+      preview.src = url.trim();
+      preview.style.display = 'block';
+      empty.style.display = 'none';
+    } else {
+      preview.style.display = 'none';
+      empty.style.display = 'block';
+    }
+  }
+};
+
+// ====== LOGO IMAGE FILE UPLOAD ======
+window.handleLogoImageUpload = async function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('File too large. Max 5MB.', 'error'); return; }
+  showToast('Uploading logo image...', 'info');
+  try {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: formData });
+    const d = await res.json();
+    if (d.url) {
+      setVal('setLogoUrl', d.url);
+      updateLogoPreview();
+      showToast('Logo uploaded successfully!', 'success');
+    } else { showToast(d.error || 'Upload failed', 'error'); }
+  } catch(e) { showToast('Upload error: ' + e.message, 'error'); }
+};
+
+// ====== HEADER BRANDING PREVIEW ======
+function updateHeaderPreview() {
+  const preview = document.getElementById('headerPreview');
+  if (!preview) return;
+  const text = getVal('setHeaderText') || 'DonghuaLand';
+  const size = getVal('setHeaderSize') || 'medium';
+  const style = getVal('setHeaderStyle') || 'bold';
+  const colorHex = getVal('setHeaderColorHex') || '#a29bfe';
+  
+  const sizeMap = { small: '16px', medium: '20px', large: '26px', xlarge: '32px' };
+  const fontSize = sizeMap[size] || '20px';
+  
+  let fontWeight = '700';
+  let fontStyle = 'normal';
+  let background = '';
+  let webkitBg = '';
+  let webkitFill = '';
+  
+  if (style === 'italic') { fontStyle = 'italic'; fontWeight = '800'; }
+  if (style === 'gradient') {
+    background = 'linear-gradient(135deg, #6c5ce7, #a29bfe)';
+    webkitBg = background;
+    webkitFill = 'transparent';
+    preview.style.background = background;
+    preview.style.webkitBackgroundClip = 'text';
+    preview.style.webkitTextFillColor = webkitFill;
+    preview.style.backgroundClip = 'text';
+    preview.style.color = 'transparent';
+  } else {
+    preview.style.background = '';
+    preview.style.webkitBackgroundClip = '';
+    preview.style.webkitTextFillColor = '';
+    preview.style.backgroundClip = '';
+    preview.style.color = colorHex;
+  }
+  
+  preview.style.fontSize = fontSize;
+  preview.style.fontWeight = fontWeight;
+  preview.style.fontStyle = fontStyle;
+  preview.textContent = text;
+}
+
+function setupHeaderPreviewListeners() {
+  ['setHeaderText','setHeaderSize','setHeaderStyle','setHeaderColorHex'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateHeaderPreview);
+    if (el) el.addEventListener('change', updateHeaderPreview);
+  });
+  // Sync color picker <-> hex input
+  const colorPicker = document.getElementById('setHeaderColor');
+  const colorHex = document.getElementById('setHeaderColorHex');
+  if (colorPicker && colorHex) {
+    colorPicker.addEventListener('input', function() {
+      colorHex.value = colorPicker.value;
+      updateHeaderPreview();
+    });
+    colorHex.addEventListener('input', function() {
+      if (/^#[0-9a-fA-F]{6}$/.test(colorHex.value)) {
+        colorPicker.value = colorHex.value;
+      }
+      updateHeaderPreview();
+    });
+  }
+}
+
+// Save header branding
+window.saveHeaderBranding = async function() {
+  const imageRadio = document.getElementById('logoTypeImage');
+  const isImage = imageRadio && imageRadio.checked;
+  const logoType = isImage ? 'image' : 'text';
+  const siteName = isImage ? (getVal('setHeaderText') || 'DonghuaLand') : (getVal('setHeaderText') || 'DonghuaLand');
+  const body = {
+    logo_type: logoType,
+    logo_url: getVal('setLogoUrl') || '',
+    logo_height: getVal('setLogoHeight') || '36',
+    header_text: siteName,
+    site_name: siteName,
+    header_size: getVal('setHeaderSize') || 'medium',
+    header_style: getVal('setHeaderStyle') || 'bold',
+    header_color: getVal('setHeaderColorHex') || '#a29bfe',
+  };
+  try {
+    const res = await fetch('/api/admin/settings', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify(body)
+    });
+    const d = await res.json();
+    showToast(d.success ? '✅ Logo & header settings saved! Refresh the site to see changes.' : (d.error || 'Error'), d.success ? 'success' : 'error');
+  } catch { showToast('Error saving settings', 'error'); }
+};
 
 // Save general settings (registration, maintenance)
 window.saveGeneralSettings = async function() {

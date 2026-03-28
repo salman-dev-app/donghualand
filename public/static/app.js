@@ -390,6 +390,81 @@ function initFooterSocials() {
     .catch(() => {});
 }
 
+// ============ SITE LOGO & HEADER BRANDING ============
+// Loads settings from /api/site-settings and applies:
+//   - Image logo (logo_type = 'image'): shows <img id="logoImg">, hides text
+//   - Text logo (logo_type = 'text'): shows styled text, hides image
+function initSiteHeaderBranding() {
+  fetch('/api/site-settings')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.data) return;
+      const s = d.data;
+      const siteName = s.header_text || s.site_name || 'DonghuaLand';
+      const logoType = s.logo_type || 'text';
+      const logoUrl = s.logo_url || '';
+      const logoHeight = parseInt(s.logo_height || '36', 10);
+      const headerSize = s.header_size || 'medium';
+      const headerStyle = s.header_style || 'bold';
+      const headerColor = s.header_color || '#a29bfe';
+
+      const logoImg = document.getElementById('logoImg');
+      const logoBrand = document.getElementById('logoTextBrand');
+
+      if (logoType === 'image' && logoUrl.trim()) {
+        // ── IMAGE LOGO ──
+        if (logoImg) {
+          logoImg.src = logoUrl.trim();
+          logoImg.alt = siteName;
+          logoImg.style.height = logoHeight + 'px';
+          logoImg.style.display = 'block';
+        }
+        if (logoBrand) logoBrand.style.display = 'none';
+      } else {
+        // ── TEXT LOGO ──
+        if (logoImg) logoImg.style.display = 'none';
+        if (logoBrand) {
+          const sizeMap = { small: '16px', medium: '20px', large: '26px', xlarge: '32px' };
+          const fontSize = sizeMap[headerSize] || '20px';
+          logoBrand.style.display = '';
+          logoBrand.textContent = siteName;
+          logoBrand.style.fontSize = fontSize;
+          logoBrand.style.fontWeight = headerStyle === 'normal' ? '600' : '800';
+          logoBrand.style.fontStyle = headerStyle === 'italic' ? 'italic' : 'normal';
+          if (headerStyle === 'gradient') {
+            logoBrand.style.background = 'linear-gradient(135deg, #6c5ce7, #a29bfe)';
+            logoBrand.style.webkitBackgroundClip = 'text';
+            logoBrand.style.webkitTextFillColor = 'transparent';
+            logoBrand.style.backgroundClip = 'text';
+            logoBrand.style.color = 'transparent';
+          } else {
+            logoBrand.style.background = '';
+            logoBrand.style.webkitBackgroundClip = '';
+            logoBrand.style.webkitTextFillColor = '';
+            logoBrand.style.backgroundClip = '';
+            logoBrand.style.color = headerColor;
+          }
+        }
+      }
+
+      // Apply site name to footer
+      const footerName = document.getElementById('footerSiteName');
+      if (footerName) footerName.textContent = siteName;
+
+      // Apply to footer copyright
+      const footerCopy = document.getElementById('footerCopy');
+      if (footerCopy) {
+        footerCopy.textContent = '© ' + new Date().getFullYear() + ' ' + siteName + '. All rights reserved.';
+      }
+
+      // Update document title
+      if (document.title.includes('DonghuaLand') && siteName !== 'DonghuaLand') {
+        document.title = document.title.replace('DonghuaLand', siteName);
+      }
+    })
+    .catch(() => {});
+}
+
 // ============ INIT ============
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
@@ -404,4 +479,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initWatchlistBtn();
   initBroadcastBanner();
   initFooterSocials();
+  initSiteHeaderBranding();
 });

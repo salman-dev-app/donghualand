@@ -11,7 +11,7 @@ export function layout(title: string, content: string, extraHead: string = ''): 
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/static/style.css">
 ${extraHead}
@@ -22,10 +22,12 @@ ${extraHead}
 <header class="site-header" id="siteHeader">
   <div class="header-inner">
 
-    <!-- Logo -->
-    <a href="/" class="logo">
-      <div class="logo-icon"><i class="fas fa-dragon"></i></div>
-      <div class="logo-text">Donghua<span class="accent">Land</span></div>
+    <!-- Logo (image OR text — controlled from admin panel) -->
+    <a href="/" class="logo" id="siteLogo">
+      <!-- Image logo (shown when logo_type = 'image') -->
+      <img src="" alt="DonghuaLand" class="logo-img" id="logoImg" style="display:none;height:36px;max-width:160px;object-fit:contain;">
+      <!-- Text logo (shown when logo_type = 'text' or default) -->
+      <span class="logo-text-brand" id="logoTextBrand">DonghuaLand</span>
     </a>
 
     <!-- Search bar (desktop: hidden until search icon clicked) -->
@@ -67,16 +69,15 @@ ${extraHead}
         <i class="fas fa-search"></i>
       </button>
 
-      <!-- Desktop: Sign In / Join buttons (hidden when logged in) -->
+      <!-- Desktop: Sign In button (hidden when logged in) -->
       <a href="/user/login" class="btn-signin" id="headerSignIn">Sign In</a>
-      <a href="/user/register" class="btn-join" id="headerJoin">Join Free</a>
 
       <!-- Mobile: Search Icon Button → opens search overlay -->
       <button class="mob-search-btn" id="mobSearchBtn" onclick="toggleSearchOverlay()" title="Search">
         <i class="fas fa-search"></i>
       </button>
 
-      <!-- Mobile: Login/Register Icon (shown when logged out) -->
+      <!-- Mobile: Login Icon (shown when logged out) -->
       <a href="/user/login" class="mob-auth-btn" id="mobAuthBtn" title="Sign In">
         <i class="fas fa-sign-in-alt"></i>
       </a>
@@ -131,7 +132,6 @@ ${extraHead}
     <div id="mobUserSection">
       <div class="mob-auth">
         <a href="/user/login" class="a-in" id="mobSignIn">Sign In</a>
-        <a href="/user/register" class="a-join" id="mobJoin">Join Free</a>
       </div>
     </div>
     <div class="mob-sep"></div>
@@ -161,10 +161,9 @@ ${content}
     <div class="footer-top">
       <div class="footer-brand">
         <a href="/" class="footer-logo">
-          <div class="fli"><i class="fas fa-dragon"></i></div>
-          <span id="footerSiteName">Donghua<span>Land</span></span>
+          <span id="footerSiteName" class="footer-site-name-text">DonghuaLand</span>
         </a>
-        <p class="footer-tagline" id="footerTagline">Your world of anime, unlocked.</p>
+        <p class="footer-tagline" id="footerTagline">Watch anime online</p>
         <div class="footer-social" id="footerSocial">
           <!-- Populated dynamically from DB settings -->
         </div>
@@ -190,7 +189,6 @@ ${content}
           <a href="/user/register">Register</a>
           <a href="/user/login">Sign In</a>
           <a href="/user/watchlist">Watchlist</a>
-          <a href="/user/membership">Membership</a>
         </div>
         <div class="footer-col">
           <h4>Support</h4>

@@ -50,6 +50,15 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   social_youtube: '',
   social_instagram: '',
   social_tiktok: '',
+  // Header branding settings
+  header_text: 'DonghuaLand',
+  header_size: 'medium',
+  header_style: 'bold',
+  header_color: '#a29bfe',
+  // Logo type: 'text' or 'image'
+  logo_type: 'text',
+  logo_url: '',
+  logo_height: '36',
 }
 
 async function getSiteSettings(db: D1Database | undefined): Promise<Record<string, string>> {
@@ -172,6 +181,15 @@ app.get('/api/site-settings', async (c) => {
       social_youtube: settings.social_youtube,
       social_instagram: settings.social_instagram,
       social_tiktok: settings.social_tiktok,
+      // Header branding settings (public - needed by frontend to render logo)
+      header_text: settings.header_text,
+      header_size: settings.header_size,
+      header_style: settings.header_style,
+      header_color: settings.header_color,
+      // Logo type and image (public - needed for logo rendering)
+      logo_type: settings.logo_type,
+      logo_url: settings.logo_url,
+      logo_height: settings.logo_height,
     }
   })
 })
@@ -448,7 +466,8 @@ app.get('/user/watchlist', (c) => c.html(watchlistPage()))
 app.get('/user/profile', (c) => c.html(profilePage()))
 app.get('/user/history', (c) => c.html(historyPage()))
 app.get('/user/settings', (c) => c.html(settingsPage()))
-app.get('/user/membership', (c) => c.redirect('/user/register'))
+// Membership redirect to home (feature removed)
+app.get('/user/membership', (c) => c.redirect('/'))
 
 // Schedule API
 app.get('/api/schedule', async (c) => {

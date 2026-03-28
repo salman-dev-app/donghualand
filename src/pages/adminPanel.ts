@@ -797,6 +797,113 @@ export function adminPanelPage(section: string = 'dashboard') {
     <div class="admin-page" id="admin-settings">
       <div class="admin-page-hd"><div class="admin-page-title">Settings</div></div>
 
+      <!-- ===== WEBSITE HEADER & BRANDING ===== -->
+      <div class="settings-card">
+        <div class="settings-title"><i class="fas fa-heading" style="color:var(--purple2);margin-right:8px;"></i> Website Header &amp; Branding</div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:16px;">Control your website logo. Choose between a custom image logo or a styled text logo.</p>
+        
+        <!-- Logo Type Toggle -->
+        <div class="admin-fg" style="margin-bottom:18px;">
+          <label class="admin-lbl"><i class="fas fa-toggle-on" style="color:var(--purple2);margin-right:4px;"></i> Logo Type</label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 18px;border:2px solid var(--border2);border-radius:var(--r8);flex:1;min-width:140px;transition:all 0.2s;" id="logoTypeTextLabel">
+              <input type="radio" name="logoType" value="text" id="logoTypeText" style="accent-color:var(--purple);" checked onchange="onLogoTypeChange()">
+              <span><i class="fas fa-font" style="color:var(--purple2);margin-right:6px;"></i><strong>Text Logo</strong><br><small style="color:var(--text3);font-weight:normal;">Display site name as styled text</small></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 18px;border:2px solid var(--border2);border-radius:var(--r8);flex:1;min-width:140px;transition:all 0.2s;" id="logoTypeImageLabel">
+              <input type="radio" name="logoType" value="image" id="logoTypeImage" style="accent-color:var(--purple);" onchange="onLogoTypeChange()">
+              <span><i class="fas fa-image" style="color:var(--purple2);margin-right:6px;"></i><strong>Image Logo</strong><br><small style="color:var(--text3);font-weight:normal;">Upload or paste URL for logo image</small></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Image Logo Section -->
+        <div id="logoImageSection" style="display:none;margin-bottom:18px;padding:16px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r10);">
+          <div class="admin-fg">
+            <label class="admin-lbl"><i class="fas fa-link" style="color:var(--purple2);margin-right:4px;"></i> Logo Image URL</label>
+            <input type="text" class="admin-inp" id="setLogoUrl" placeholder="https://example.com/logo.png" oninput="updateLogoPreview()">
+            <div style="font-size:11px;color:var(--text4);margin-top:4px;">Enter a direct image URL (PNG, JPG, SVG, WEBP).</div>
+          </div>
+          <div class="admin-fg" style="margin-top:10px;">
+            <label class="admin-lbl"><i class="fas fa-upload" style="color:var(--purple2);margin-right:4px;"></i> Or Upload Logo Image</label>
+            <div class="img-upload-area" onclick="document.getElementById('logoFileUpload').click()">
+              <i class="fas fa-image"></i><p>Click to upload logo image</p><span>PNG, JPG, SVG, WEBP recommended</span>
+            </div>
+            <input type="file" id="logoFileUpload" accept="image/*" style="display:none" onchange="handleLogoImageUpload(this)">
+          </div>
+          <div style="margin-top:10px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text4);margin-bottom:8px;">Image Logo Preview</div>
+            <div style="background:var(--bg2);padding:12px 16px;border-radius:var(--r8);display:inline-flex;align-items:center;">
+              <img id="logoImgPreview" src="" alt="Logo Preview" style="height:40px;max-width:200px;object-fit:contain;display:none;" onerror="this.style.display='none'">
+              <span id="logoImgPreviewEmpty" style="font-size:12px;color:var(--text4);">No image set yet</span>
+            </div>
+          </div>
+          <div class="admin-fg" style="margin-top:14px;">
+            <label class="admin-lbl"><i class="fas fa-expand-arrows-alt" style="color:var(--purple2);margin-right:4px;"></i> Logo Image Height</label>
+            <select class="admin-inp" id="setLogoHeight">
+              <option value="28">Small (28px)</option>
+              <option value="36" selected>Medium (36px)</option>
+              <option value="44">Large (44px)</option>
+              <option value="52">X-Large (52px)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Text Logo Section -->
+        <div id="logoTextSection">
+          <div class="admin-form-grid">
+            <!-- Website Name -->
+            <div class="admin-fg" style="grid-column:1/-1;">
+              <label class="admin-lbl"><i class="fas fa-font" style="color:var(--purple2);margin-right:4px;"></i> Website Name (Header Text)</label>
+              <input type="text" class="admin-inp" id="setHeaderText" placeholder="e.g. DonghuaLand" maxlength="60" oninput="updateHeaderPreview()">
+              <div style="font-size:11px;color:var(--text4);margin-top:4px;">This text is displayed in the navigation header.</div>
+            </div>
+            
+            <!-- Header Text Size -->
+            <div class="admin-fg">
+              <label class="admin-lbl"><i class="fas fa-text-height" style="color:var(--purple2);margin-right:4px;"></i> Text Size</label>
+              <select class="admin-inp" id="setHeaderSize" onchange="updateHeaderPreview()">
+                <option value="small">Small (16px)</option>
+                <option value="medium" selected>Medium (20px)</option>
+                <option value="large">Large (26px)</option>
+                <option value="xlarge">X-Large (32px)</option>
+              </select>
+            </div>
+            
+            <!-- Header Text Style -->
+            <div class="admin-fg">
+              <label class="admin-lbl"><i class="fas fa-bold" style="color:var(--purple2);margin-right:4px;"></i> Text Style</label>
+              <select class="admin-inp" id="setHeaderStyle" onchange="updateHeaderPreview()">
+                <option value="normal">Normal</option>
+                <option value="bold" selected>Bold</option>
+                <option value="italic">Italic Bold</option>
+                <option value="gradient">Gradient (Purple)</option>
+              </select>
+            </div>
+            
+            <!-- Header Color -->
+            <div class="admin-fg">
+              <label class="admin-lbl"><i class="fas fa-palette" style="color:var(--purple2);margin-right:4px;"></i> Text Color</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="color" id="setHeaderColor" value="#a29bfe" style="height:38px;width:60px;border:1px solid var(--border2);border-radius:var(--r8);background:var(--bg4);padding:3px;cursor:pointer;">
+                <input type="text" class="admin-inp" id="setHeaderColorHex" placeholder="#a29bfe" maxlength="20" style="flex:1;" oninput="updateHeaderPreview()">
+              </div>
+              <div style="font-size:11px;color:var(--text4);margin-top:4px;">Leave empty for default purple. Use hex e.g. #ff6b6b</div>
+            </div>
+          </div>
+          
+          <!-- Live Preview for text logo -->
+          <div style="margin:16px 0;padding:16px;background:var(--bg4);border-radius:var(--r12);border:1px solid var(--border);">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text4);margin-bottom:10px;">Live Preview</div>
+            <div style="background:var(--bg2);padding:10px 16px;border-radius:var(--r8);display:inline-flex;align-items:center;">
+              <div id="headerPreview" style="font-size:20px;font-weight:800;color:#a29bfe;letter-spacing:-0.3px;">DonghuaLand</div>
+            </div>
+          </div>
+        </div>
+        
+        <button class="admin-btn admin-btn-purple" onclick="saveHeaderBranding()"><i class="fas fa-save"></i> Save Header &amp; Logo Settings</button>
+      </div>
+
       <!-- General Settings -->
       <div class="settings-card">
         <div class="settings-title"><i class="fas fa-globe" style="color:var(--purple2);margin-right:8px;"></i> General Settings</div>
