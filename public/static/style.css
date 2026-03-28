@@ -962,8 +962,8 @@ section.hero-slider + section.hero-slider {
 /* ================================================================
    WATCH / PLAYER PAGE
 ================================================================ */
-.watch-wrap { max-width: 1440px; margin: 0 auto; padding: 14px 16px; }
-.watch-layout { display: grid; grid-template-columns: 1fr 320px; gap: 14px; }
+.watch-wrap { max-width: 900px; margin: 0 auto; padding: 14px 16px 32px; }
+.watch-layout { display: block; }
 
 /* Player box */
 .player-section {}
@@ -1067,6 +1067,192 @@ section.hero-slider + section.hero-slider {
 .ep-list-name { font-size: 12px; color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ep-list-item.active .ep-list-name { color: var(--text1); }
 .ep-list-now { font-size: 10px; color: var(--purple2); flex-shrink: 0; }
+
+/* ================================================================
+   CRUNCHYROLL-STYLE EPISODE LIST BOX
+================================================================ */
+
+/* Hide old sidebar — replaced by cr-ep-box below player */
+.watch-sidebar { display: none; }
+
+/* Episode box container */
+.cr-ep-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--r12);
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+/* Episode box header */
+.cr-ep-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cr-ep-head-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text1);
+}
+.cr-ep-total {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text3);
+  background: var(--bg5);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.cr-ep-head-right { display: flex; align-items: center; }
+.cr-ep-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.cr-ep-search-icon {
+  position: absolute;
+  left: 9px;
+  font-size: 11px;
+  color: var(--text4);
+  pointer-events: none;
+}
+.cr-ep-search {
+  padding: 6px 10px 6px 28px;
+  background: var(--bg5);
+  border: 1px solid var(--border2);
+  border-radius: var(--r8);
+  font-size: 12px;
+  color: var(--text1);
+  outline: none;
+  width: 150px;
+  transition: border-color 0.2s, width 0.2s;
+  font-family: inherit;
+}
+.cr-ep-search:focus {
+  border-color: var(--purple);
+  width: 190px;
+}
+.cr-ep-search::placeholder { color: var(--text4); }
+
+/* Episode list — vertical scrollable */
+.cr-ep-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.cr-ep-list::-webkit-scrollbar { width: 4px; }
+.cr-ep-list::-webkit-scrollbar-track { background: var(--bg3); }
+.cr-ep-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Each episode row */
+.cr-ep-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  color: inherit;
+}
+.cr-ep-item:hover { background: var(--bg4); }
+.cr-ep-item.active {
+  background: var(--purple-dim);
+  border-left-color: var(--purple);
+}
+
+/* Thumbnail */
+.cr-ep-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 110px;
+  height: 62px;
+  border-radius: var(--r6);
+  overflow: hidden;
+  background: var(--bg5);
+}
+.cr-ep-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* "Now playing" overlay on active thumb */
+.cr-ep-playing {
+  position: absolute;
+  inset: 0;
+  background: rgba(108, 92, 231, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #fff;
+}
+
+/* EP number badge on thumbnail */
+.cr-ep-num-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 5px;
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+
+/* Episode text info */
+.cr-ep-info {
+  flex: 1;
+  min-width: 0;
+}
+.cr-ep-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.cr-ep-item.active .cr-ep-title { color: var(--purple2); }
+.cr-ep-sub {
+  font-size: 11px;
+  color: var(--text3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Empty search message */
+.cr-ep-empty {
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+  color: var(--text3);
+}
+
+/* Mobile adjustments for cr-ep-box */
+@media (max-width: 600px) {
+  .cr-ep-thumb-wrap { width: 88px; height: 50px; }
+  .cr-ep-item { padding: 7px 10px; gap: 10px; }
+  .cr-ep-title { font-size: 12px; }
+  .cr-ep-search { width: 120px; }
+  .cr-ep-search:focus { width: 150px; }
+  .cr-ep-list { max-height: 320px; }
+}
 
 /* ================================================================
    SEARCH / BROWSE PAGE

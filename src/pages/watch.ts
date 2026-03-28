@@ -37,6 +37,9 @@ export function watchPage(data: { anime: any, episode: any, allEpisodes: any[], 
     </div>`
   }
 
+  // Sort episodes ascending
+  const sortedEpisodes = [...allEpisodes].sort((a, b) => a.episode_number - b.episode_number)
+
   const content = `
 ${breadcrumb([
   { label: 'Browse', href: '/search' },
@@ -45,155 +48,180 @@ ${breadcrumb([
 ])}
 
 <div class="watch-wrap">
-  <div class="watch-layout">
 
-    <!-- ====== Left: Video Player ====== -->
-    <div class="player-section">
+  <!-- ====== VIDEO PLAYER SECTION ====== -->
+  <div class="player-section">
 
-      <!-- Episode Nav -->
-      <div class="ep-nav-row">
-        ${prevEp
-          ? `<a href="/watch/${anime.slug}-episode-${prevEp.episode_number}" class="ep-nav-btn"><i class="fas fa-chevron-left"></i> Prev</a>`
-          : `<span class="ep-nav-btn disabled"><i class="fas fa-chevron-left"></i> Prev</span>`}
-        <a href="/anime/${anime.slug}" class="ep-nav-btn ep-nav-mid">
-          <i class="fas fa-list"></i> All Episodes
-        </a>
-        ${nextEp
-          ? `<a href="/watch/${anime.slug}-episode-${nextEp.episode_number}" class="ep-nav-btn">Next <i class="fas fa-chevron-right"></i></a>`
-          : `<span class="ep-nav-btn disabled">Next <i class="fas fa-chevron-right"></i></span>`}
+    <!-- Episode Nav -->
+    <div class="ep-nav-row">
+      ${prevEp
+        ? `<a href="/watch/${anime.slug}-episode-${prevEp.episode_number}" class="ep-nav-btn"><i class="fas fa-chevron-left"></i> Prev</a>`
+        : `<span class="ep-nav-btn disabled"><i class="fas fa-chevron-left"></i> Prev</span>`}
+      <a href="/anime/${anime.slug}" class="ep-nav-btn ep-nav-mid">
+        <i class="fas fa-list"></i> All Episodes
+      </a>
+      ${nextEp
+        ? `<a href="/watch/${anime.slug}-episode-${nextEp.episode_number}" class="ep-nav-btn">Next <i class="fas fa-chevron-right"></i></a>`
+        : `<span class="ep-nav-btn disabled">Next <i class="fas fa-chevron-right"></i></span>`}
+    </div>
+
+    <!-- Video Player Box -->
+    <div class="player-box" id="playerBox">
+      <div style="position:relative; width:100%; height:100%;">
+        ${playerHTML}
       </div>
+    </div>
 
-      <!-- Video Player Box -->
-      <div class="player-box" id="playerBox">
-        <div style="position:relative; width:100%; height:100%;">
-          ${playerHTML}
-        </div>
+    <!-- Server Selector -->
+    <div class="server-row">
+      <div class="server-label"><i class="fas fa-server" style="color:var(--purple2); margin-right:4px;"></i> Video Servers</div>
+      <div class="server-btns" id="serverBtns">
+        ${hasEmbed ? `<button class="s-btn active"><i class="fas fa-play"></i> Server 1</button>` : ''}
+        ${hasVideo ? `<button class="s-btn${!hasEmbed ? ' active' : ''}"><i class="fas fa-film"></i> Direct</button>` : ''}
+        ${!hasEmbed && !hasVideo ? `<span style="font-size:12px;color:var(--text3);"><i class="fas fa-exclamation-circle"></i> No video source</span>` : ''}
       </div>
+    </div>
 
-      <!-- Server Selector -->
-      <div class="server-row">
-        <div class="server-label"><i class="fas fa-server" style="color:var(--purple2); margin-right:4px;"></i> Video Servers</div>
-        <div class="server-btns" id="serverBtns">
-          ${hasEmbed ? `<button class="s-btn active"><i class="fas fa-play"></i> Server 1</button>` : ''}
-          ${hasVideo ? `<button class="s-btn${!hasEmbed ? ' active' : ''}"><i class="fas fa-film"></i> Direct</button>` : ''}
-          ${!hasEmbed && !hasVideo ? `<span style="font-size:12px;color:var(--text3);"><i class="fas fa-exclamation-circle"></i> No video source</span>` : ''}
-        </div>
-      </div>
-
-      <!-- Watch Meta Card -->
-      <div class="watch-meta-card">
-        <div class="wm-head">
-          <img src="${anime.cover_image || ''}" alt="${anime.title}" class="wm-poster"
-               onerror="this.style.display='none'">
-          <div class="wm-info">
-            <a href="/anime/${anime.slug}" class="wm-title" style="transition:color 0.2s;"
-               onmouseover="this.style.color='var(--purple2)'" onmouseout="this.style.color=''">${anime.title}</a>
-            <div class="wm-badges">
-              <span class="badge badge-purple" style="font-size:9px;">${anime.type || 'ONA'}</span>
-              <span class="badge ${anime.status === 'Ongoing' ? 'badge-green' : 'badge-blue'}" style="font-size:9px;">${anime.status || 'Ongoing'}</span>
-              ${anime.release_year ? `<span class="badge badge-gray" style="font-size:9px;">${anime.release_year}</span>` : ''}
-            </div>
+    <!-- Watch Meta Card -->
+    <div class="watch-meta-card">
+      <div class="wm-head">
+        <img src="${anime.cover_image || ''}" alt="${anime.title}" class="wm-poster"
+             onerror="this.style.display='none'">
+        <div class="wm-info">
+          <a href="/anime/${anime.slug}" class="wm-title" style="transition:color 0.2s;"
+             onmouseover="this.style.color='var(--purple2)'" onmouseout="this.style.color=''">${anime.title}</a>
+          <div class="wm-badges">
+            <span class="badge badge-purple" style="font-size:9px;">${anime.type || 'ONA'}</span>
+            <span class="badge ${anime.status === 'Ongoing' ? 'badge-green' : 'badge-blue'}" style="font-size:9px;">${anime.status || 'Ongoing'}</span>
+            ${anime.release_year ? `<span class="badge badge-gray" style="font-size:9px;">${anime.release_year}</span>` : ''}
           </div>
         </div>
-        <div class="wm-actions">
-          <button class="wm-action-btn" id="wlBtn" data-slug="${anime.slug}" onclick="addToWatchlist()">
-            <i class="fas fa-bookmark"></i> Watchlist
-          </button>
-          <button class="wm-action-btn" onclick="reportIssue()">
-            <i class="fas fa-flag"></i> Report
-          </button>
-          <button class="wm-action-btn" onclick="shareLink()">
-            <i class="fas fa-share-alt"></i> Share
-          </button>
-          ${nextEp ? `
-          <a href="/watch/${anime.slug}-episode-${nextEp.episode_number}" 
-             class="wm-action-btn" style="margin-left:auto; border-color:rgba(108,92,231,0.4); color:var(--purple2);">
-            <i class="fas fa-forward"></i> Next EP
-          </a>` : ''}
+      </div>
+      <div class="wm-actions">
+        <button class="wm-action-btn" id="wlBtn" data-slug="${anime.slug}" onclick="addToWatchlist()">
+          <i class="fas fa-bookmark"></i> Watchlist
+        </button>
+        <button class="wm-action-btn" onclick="reportIssue()">
+          <i class="fas fa-flag"></i> Report
+        </button>
+        <button class="wm-action-btn" onclick="shareLink()">
+          <i class="fas fa-share-alt"></i> Share
+        </button>
+        ${nextEp ? `
+        <a href="/watch/${anime.slug}-episode-${nextEp.episode_number}" 
+           class="wm-action-btn" style="margin-left:auto; border-color:rgba(108,92,231,0.4); color:var(--purple2);">
+          <i class="fas fa-forward"></i> Next EP
+        </a>` : ''}
+      </div>
+    </div>
+
+    <!-- Synopsis snippet -->
+    ${anime.description ? `
+    <div style="background:var(--bg3); border:1px solid var(--border); border-radius:var(--r10); padding:14px; margin-bottom:12px;">
+      <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text3); margin-bottom:8px;">About</div>
+      <p style="font-size:13px; color:var(--text2); line-height:1.7; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${anime.description}</p>
+    </div>` : ''}
+
+  </div><!-- end .player-section -->
+
+  <!-- ====== EPISODE LIST BOX (Crunchyroll style) ====== -->
+  <div class="cr-ep-box">
+    <div class="cr-ep-head">
+      <div class="cr-ep-head-left">
+        <i class="fas fa-th-list" style="color:var(--purple2);"></i>
+        <span>Episodes</span>
+        <span class="cr-ep-total">${sortedEpisodes.length} eps</span>
+      </div>
+      <div class="cr-ep-head-right">
+        <div class="cr-ep-search-wrap">
+          <i class="fas fa-search cr-ep-search-icon"></i>
+          <input type="text" class="cr-ep-search" id="crEpSearch"
+            placeholder="Search episode..." autocomplete="off"
+            oninput="filterCrEpisodes(this.value)">
         </div>
       </div>
-
-      <!-- Synopsis snippet -->
-      ${anime.description ? `
-      <div style="background:var(--bg3); border:1px solid var(--border); border-radius:var(--r10); padding:14px; margin-bottom:12px;">
-        <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--text3); margin-bottom:8px;">About</div>
-        <p style="font-size:13px; color:var(--text2); line-height:1.7; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${anime.description}</p>
-      </div>` : ''}
-
-      <!-- ====== COMMENTS SECTION ====== -->
-      <div class="comments-section" id="commentsSection">
-        <div class="comments-hd">
-          <span><i class="fas fa-comments" style="color:var(--purple2);margin-right:6px;"></i> Comments</span>
-          <span class="comments-count" id="commentsCount" style="font-size:12px;color:var(--text3);"></span>
-        </div>
-
-        <!-- Post Comment Box -->
-        <div class="comment-post-box" id="commentPostBox">
-          <div id="commentLoginNotice" style="display:none; text-align:center; padding:14px; background:var(--bg4); border-radius:var(--r8); font-size:13px; color:var(--text3);">
-            <a href="/user/login" style="color:var(--purple2);">Sign in</a> to leave a comment.
+    </div>
+    <div class="cr-ep-list" id="crEpList">
+      ${sortedEpisodes.map(ep => {
+        const isActive = ep.episode_number === episode.episode_number
+        const thumb = anime.cover_image || ''
+        const title = ep.title || `Episode ${ep.episode_number}`
+        return `
+        <a href="/watch/${anime.slug}-episode-${ep.episode_number}"
+           class="cr-ep-item${isActive ? ' active' : ''}"
+           data-epnum="${ep.episode_number}"
+           data-eptitle="${title.toLowerCase()}"
+           title="${title}">
+          <div class="cr-ep-thumb-wrap">
+            <img src="${thumb}" alt="EP ${ep.episode_number}" class="cr-ep-thumb"
+                 onerror="this.parentElement.style.background='var(--bg5)'">
+            ${isActive ? `<div class="cr-ep-playing"><i class="fas fa-volume-up"></i></div>` : ''}
+            <div class="cr-ep-num-badge">EP ${ep.episode_number}</div>
           </div>
-          <div id="commentForm" style="display:none;">
-            <div style="display:flex; gap:10px; align-items:flex-start;">
-              <img id="commentUserAva" src="" alt="" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;object-fit:cover;">
-              <div style="flex:1;">
-                <textarea id="commentInput" placeholder="Share your thoughts about this episode..." 
-                  style="width:100%;min-height:80px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r8);padding:10px;color:var(--text1);font-size:13px;resize:vertical;font-family:inherit;outline:none;transition:border-color 0.2s;"
-                  onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border2)'"
-                  maxlength="2000"></textarea>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px;">
-                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);cursor:pointer;">
-                    <input type="checkbox" id="commentSpoiler" style="accent-color:var(--purple);">
-                    Mark as spoiler
-                  </label>
-                  <div style="display:flex;gap:8px;align-items:center;">
-                    <span id="commentCharCount" style="font-size:11px;color:var(--text4);">0/2000</span>
-                    <button onclick="postComment()" id="commentSubmitBtn"
-                      style="padding:8px 18px;background:var(--purple);color:#fff;border:none;border-radius:var(--r8);font-size:13px;font-weight:700;cursor:pointer;">
-                      <i class="fas fa-paper-plane"></i> Post
-                    </button>
-                  </div>
-                </div>
+          <div class="cr-ep-info">
+            <div class="cr-ep-title">${title}</div>
+            <div class="cr-ep-sub">${anime.title}</div>
+          </div>
+        </a>`
+      }).join('')}
+    </div>
+    <div class="cr-ep-empty" id="crEpEmpty" style="display:none;">
+      <i class="fas fa-search" style="margin-right:6px;"></i> No episodes found
+    </div>
+  </div><!-- end .cr-ep-box -->
+
+  <!-- ====== COMMENTS BOX ====== -->
+  <div class="comments-section" id="commentsSection">
+    <div class="comments-hd">
+      <span><i class="fas fa-comments" style="color:var(--purple2);margin-right:6px;"></i> Comments</span>
+      <span class="comments-count" id="commentsCount" style="font-size:12px;color:var(--text3);"></span>
+    </div>
+
+    <!-- Post Comment Box -->
+    <div class="comment-post-box" id="commentPostBox">
+      <div id="commentLoginNotice" style="display:none; text-align:center; padding:14px; background:var(--bg4); border-radius:var(--r8); font-size:13px; color:var(--text3);">
+        <a href="/user/login" style="color:var(--purple2);">Sign in</a> to leave a comment.
+      </div>
+      <div id="commentForm" style="display:none;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <img id="commentUserAva" src="" alt="" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;object-fit:cover;">
+          <div style="flex:1;">
+            <textarea id="commentInput" placeholder="Share your thoughts about this episode..." 
+              style="width:100%;min-height:80px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r8);padding:10px;color:var(--text1);font-size:13px;resize:vertical;font-family:inherit;outline:none;transition:border-color 0.2s;"
+              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border2)'"
+              maxlength="2000"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);cursor:pointer;">
+                <input type="checkbox" id="commentSpoiler" style="accent-color:var(--purple);">
+                Mark as spoiler
+              </label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span id="commentCharCount" style="font-size:11px;color:var(--text4);">0/2000</span>
+                <button onclick="postComment()" id="commentSubmitBtn"
+                  style="padding:8px 18px;background:var(--purple);color:#fff;border:none;border-radius:var(--r8);font-size:13px;font-weight:700;cursor:pointer;">
+                  <i class="fas fa-paper-plane"></i> Post
+                </button>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Comments List -->
-        <div id="commentsList" style="margin-top:12px;">
-          <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;" id="commentsLoading">
-            <i class="fas fa-spinner fa-spin"></i> Loading comments...
-          </div>
-        </div>
-        <div id="commentsLoadMore" style="text-align:center;padding:12px;display:none;">
-          <button onclick="loadMoreComments()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r8);padding:8px 20px;color:var(--text2);font-size:13px;cursor:pointer;">
-            Load More Comments
-          </button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ====== Right: Episode Sidebar ====== -->
-    <div class="watch-sidebar">
-      <div class="sidebar-card">
-        <div class="sidebar-head">
-          <span><i class="fas fa-list" style="color:var(--purple2); margin-right:6px;"></i> Episodes</span>
-          <span style="font-size:12px; font-weight:400; color:var(--text3);">${allEpisodes.length} total</span>
-        </div>
-        <div class="ep-list" id="epList">
-          ${allEpisodes.map(ep => `
-          <a href="/watch/${anime.slug}-episode-${ep.episode_number}"
-             class="ep-list-item${ep.episode_number === episode.episode_number ? ' active' : ''}">
-            <span class="ep-list-num">EP ${ep.episode_number}</span>
-            <span class="ep-list-name">${ep.title || 'Episode ' + ep.episode_number}</span>
-            ${ep.episode_number === episode.episode_number ? `<span class="ep-list-now"><i class="fas fa-volume-up"></i></span>` : ''}
-          </a>`).join('')}
-        </div>
       </div>
     </div>
 
-  </div>
-</div>
+    <!-- Comments List -->
+    <div id="commentsList" style="margin-top:12px;">
+      <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;" id="commentsLoading">
+        <i class="fas fa-spinner fa-spin"></i> Loading comments...
+      </div>
+    </div>
+    <div id="commentsLoadMore" style="text-align:center;padding:12px;display:none;">
+      <button onclick="loadMoreComments()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r8);padding:8px 20px;color:var(--text2);font-size:13px;cursor:pointer;">
+        Load More Comments
+      </button>
+    </div>
+  </div><!-- end .comments-section -->
+
+</div><!-- end .watch-wrap -->
 
 <script>
 // Save to watch history
@@ -233,10 +261,29 @@ function shareLink() {
     .then(() => window.showToast('Link copied!', 'success'))
     .catch(() => window.showToast('Copy: ' + window.location.href, 'info'));
 }
-// Auto-scroll to active episode
-document.addEventListener('DOMContentLoaded', () => {
-  const a = document.querySelector('.ep-list-item.active');
-  if (a) a.scrollIntoView({ block: 'center', behavior: 'smooth' });
+
+// Episode search filter
+function filterCrEpisodes(val) {
+  const q = val.trim().toLowerCase();
+  const items = document.querySelectorAll('.cr-ep-item');
+  let found = 0;
+  items.forEach(function(item) {
+    const num = item.getAttribute('data-epnum') || '';
+    const title = item.getAttribute('data-eptitle') || '';
+    const match = !q || num.includes(q) || title.includes(q);
+    item.style.display = match ? '' : 'none';
+    if (match) found++;
+  });
+  const empty = document.getElementById('crEpEmpty');
+  if (empty) empty.style.display = found === 0 ? 'block' : 'none';
+}
+
+// Auto-scroll to active episode on load
+document.addEventListener('DOMContentLoaded', function() {
+  const active = document.querySelector('.cr-ep-item.active');
+  if (active) {
+    active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
   if (window.initWatchlistBtn) window.initWatchlistBtn();
   initComments();
 });
@@ -265,7 +312,7 @@ function initComments() {
     const input = document.getElementById('commentInput');
     const charCount = document.getElementById('commentCharCount');
     if (input && charCount) {
-      input.addEventListener('input', () => { charCount.textContent = input.value.length + '/2000'; });
+      input.addEventListener('input', function() { charCount.textContent = input.value.length + '/2000'; });
     }
   } else {
     if (loginNotice) loginNotice.style.display = 'block';
@@ -353,9 +400,7 @@ function buildCommentEl(c) {
           </button>
           \${canDelete ? \`<button onclick="deleteComment(\${c.id}, this)" class="comment-action-btn comment-delete-btn"><i class="fas fa-trash"></i></button>\` : ''}
         </div>
-        <!-- Reply form placeholder -->
         <div class="reply-form-wrap" id="replyForm-\${c.id}" style="display:none;margin-top:10px;"></div>
-        <!-- Replies -->
         \${repliesHtml ? \`<div class="comment-replies">\${repliesHtml}</div>\` : ''}
       </div>
     </div>\`;
@@ -390,8 +435,7 @@ function escHtmlC(str) {
 }
 
 function startReply(parentId, username) {
-  // Close any open reply forms
-  document.querySelectorAll('.reply-form-wrap').forEach(el => { el.style.display = 'none'; el.innerHTML = ''; });
+  document.querySelectorAll('.reply-form-wrap').forEach(function(el) { el.style.display = 'none'; el.innerHTML = ''; });
   
   replyingTo = parentId;
   const wrap = document.getElementById('replyForm-' + parentId);
@@ -443,7 +487,7 @@ async function submitReply(parentId) {
     if (data.success) {
       cancelReply(parentId);
       window.showToast('Reply posted!', 'success');
-      loadComments(1); // Refresh
+      loadComments(1);
     } else {
       window.showToast(data.error || 'Failed to post reply', 'error');
     }
