@@ -1,0 +1,9 @@
+# Copy this file to .dev.vars for local development
+# Set these in Cloudflare Dashboard → Workers & Pages → Settings → Variables for production
+
+SITE_NAME=DonghuaLand
+JWT_SECRET=your-secret-key
+IMGBB_API_KEY=your-imgbb-key
+TMDB_API_KEY=your-tmdb-key
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-admin-password

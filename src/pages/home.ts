@@ -8,8 +8,9 @@ export function homePage(data: {
   popular: any[]
   ongoing: any[]
   schedule: any[]
+  siteName?: string
 }) {
-  const { featured, trending, recent, popular, ongoing, schedule } = data
+  const { featured, trending, recent, popular, ongoing, schedule, siteName = 'DonghuaLand' } = data
 
   // Hero slider - use featured array (up to 5)
   const heroItems = featured.length > 0 ? featured.slice(0, 5) : []
@@ -121,7 +122,7 @@ export function homePage(data: {
 <section class="hero-slider" style="background: linear-gradient(135deg, #0a0a0f 0%, #13131e 50%, #1a1a2e 100%); min-height: 320px; display:flex; align-items:center; justify-content:center;">
   <div style="text-align:center; padding:40px 20px;">
     <i class="fas fa-dragon" style="font-size:60px; color:var(--purple); margin-bottom:20px; display:block;"></i>
-    <h1 style="font-size:32px; font-weight:900; margin-bottom:10px;">Welcome to DonghuaLand</h1>
+    <h1 style="font-size:32px; font-weight:900; margin-bottom:10px;">Welcome to ${siteName}</h1>
     <p style="color:var(--text3); font-size:15px; margin-bottom:24px;">Your world of Chinese anime, unlocked.</p>
     <a href="/search" class="btn-watch" style="display:inline-flex;"><i class="fas fa-compass"></i> Browse Anime</a>
   </div>
@@ -226,5 +227,5 @@ ${trending.length > 0 ? `
 ${scheduleSection}
 `
 
-  return layout('Donghualand - Watch Chinese Anime Online Free', content)
+  return layout(`${siteName} - Free Anime Streaming Online`, content, '', siteName)
 }

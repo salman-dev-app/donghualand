@@ -1,6 +1,6 @@
 import { layout } from './layout'
 
-export function notFoundPage(): string {
+export function notFoundPage(siteName: string = 'DonghuaLand'): string {
   const content = `
 <div class="error-page">
   <div>
@@ -15,5 +15,5 @@ export function notFoundPage(): string {
   </div>
 </div>
 `
-  return layout('404 - Page Not Found - Donghualand', content)
+  return layout(`404 - Page Not Found - ${siteName}`, content, '', siteName)
 }

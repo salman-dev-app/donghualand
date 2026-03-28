@@ -1,8 +1,8 @@
 import { layout } from './layout'
 import { breadcrumb, genresFromJson } from './components'
 
-export function watchPage(data: { anime: any, episode: any, allEpisodes: any[], prevEp: any, nextEp: any }) {
-  const { anime, episode, allEpisodes, prevEp, nextEp } = data
+export function watchPage(data: { anime: any, episode: any, allEpisodes: any[], prevEp: any, nextEp: any, siteName?: string }) {
+  const { anime, episode, allEpisodes, prevEp, nextEp, siteName = 'DonghuaLand' } = data
   const genres = genresFromJson(anime.genres)
 
   // Determine what video source to show
@@ -610,5 +610,5 @@ window.loadMoreComments = function() {
 </style>
 `
 
-  return layout(`Watch ${anime.title} Episode ${episode.episode_number} - Donghualand`, content)
+  return layout(`Watch ${anime.title} Episode ${episode.episode_number} - ${siteName}`, content, '', siteName)
 }

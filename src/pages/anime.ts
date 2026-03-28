@@ -1,8 +1,8 @@
 import { layout } from './layout'
 import { genresFromJson, formatRating, episodeCard, breadcrumb, animeCard } from './components'
 
-export function animePage(data: { anime: any, episodes: any[], related: any[] }) {
-  const { anime, episodes, related } = data
+export function animePage(data: { anime: any, episodes: any[], related: any[], siteName?: string }) {
+  const { anime, episodes, related, siteName = 'DonghuaLand' } = data
   const genres = genresFromJson(anime.genres)
   const studios = genresFromJson(anime.studios)
 
@@ -144,5 +144,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 `
 
-  return layout(`${anime.title} - Watch Online Free | Donghualand`, content)
+  return layout(`${anime.title} - Watch Online Free | ${siteName}`, content, '', siteName)
 }

@@ -1,6 +1,6 @@
 import { layout } from './layout'
 
-export function settingsPage(): string {
+export function settingsPage(siteName: string = 'DonghuaLand'): string {
   const content = `
 <div class="user-page-wrap">
   <div id="settingsNotLoggedIn" class="auth-required hidden">
@@ -310,5 +310,5 @@ export function settingsPage(): string {
 })();
 </script>
 `
-  return layout('Settings - Donghualand', content)
+  return layout(`Settings - ${siteName}`, content, '', siteName)
 }

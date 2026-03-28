@@ -10,8 +10,9 @@ export function searchPage(data: {
   genre: string
   type: string
   status: string
+  siteName?: string
 }) {
-  const { results, total, page, perPage, q, genre, type, status } = data
+  const { results, total, page, perPage, q, genre, type, status, siteName = 'DonghuaLand' } = data
   const totalPages = Math.ceil(total / perPage)
 
   const buildUrl = (p: number) => {
@@ -112,7 +113,7 @@ export function searchPage(data: {
 `
 
   return layout(
-    q ? `Search: ${q} - Donghualand` : 'Browse Anime - Donghualand',
-    content
+    q ? `Search: ${q} - ${siteName}` : `Browse Anime - ${siteName}`,
+    content, '', siteName
   )
 }

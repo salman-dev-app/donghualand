@@ -1,6 +1,6 @@
 import { layout } from './layout'
 
-export function registerPage() {
+export function registerPage(siteName: string = 'DonghuaLand') {
   const content = `
 <div class="auth-page">
   <div class="auth-card">
@@ -12,7 +12,7 @@ export function registerPage() {
     <p class="auth-sub">Your world of Chinese anime, unlocked.</p>
 
     <h2 class="auth-title">Create Account</h2>
-    <p style="text-align:center; font-size:13px; color:var(--text3); margin-bottom:24px;">Join the DonghuaLand community today — it's free!</p>
+    <p style="text-align:center; font-size:13px; color:var(--text3); margin-bottom:24px;">Join the ${siteName} community today — it's free!</p>
 
     <!-- Register Form -->
     <form id="registerForm" onsubmit="doRegister(event)">
@@ -80,7 +80,7 @@ async function doRegister(e) {
     if (data.success) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      showToast('Welcome to DonghuaLand, ' + username + '!', 'success');
+      showToast('Welcome to ${siteName}, ' + username + '!', 'success');
       setTimeout(() => { window.location.href = '/'; }, 900);
     } else {
       showToast(data.error || 'Registration failed', 'error');
@@ -95,5 +95,5 @@ async function doRegister(e) {
 }
 </script>
 `
-  return layout('Create Account - Donghualand', content)
+  return layout(`Create Account - ${siteName}`, content, '', siteName)
 }

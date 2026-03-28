@@ -52,12 +52,16 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   social_tiktok: '',
 }
 
-async function getSiteSettings(db: D1Database | undefined): Promise<Record<string, string>> {
+async function getSiteSettings(db: D1Database | undefined, envSiteName?: string): Promise<Record<string, string>> {
   const result: Record<string, string> = { ...DEFAULT_SETTINGS }
+  // SITE_NAME env variable overrides the default
+  if (envSiteName) result.site_name = envSiteName
   if (!db) return result
   try {
     const rows = await db.prepare('SELECT key, value FROM settings').all()
     if (rows.results) rows.results.forEach((s: any) => { result[s.key] = s.value })
+    // SITE_NAME env always wins over DB value
+    if (envSiteName) result.site_name = envSiteName
   } catch { /* return defaults */ }
   return result
 }
@@ -69,6 +73,7 @@ type Bindings = {
   ADMIN_USERNAME: string
   ADMIN_PASSWORD: string
   IMGBB_API_KEY: string
+  SITE_NAME: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -109,7 +114,7 @@ app.use('*', async (c, next) => {
         if (accept.includes('text/html')) {
           return c.html(`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Maintenance - DonghuaLand</title>
+<title>Maintenance - ${c.env?.SITE_NAME || 'DonghuaLand'}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -153,7 +158,7 @@ app.route('/api/upload', uploadRoutes)
 // Public site settings (for frontend to read site name, socials, etc.)
 app.get('/api/site-settings', async (c) => {
   const db = c.env?.DB
-  const settings = await getSiteSettings(db)
+  const settings = await getSiteSettings(db, c.env?.SITE_NAME)
   // Only expose safe public fields
   return c.json({
     success: true,
@@ -230,6 +235,7 @@ app.get('/', async (c) => {
       ORDER BY s.day_of_week
     `).all()
 
+    const settings = await getSiteSettings(db, c.env?.SITE_NAME)
     return c.html(homePage({
       featured: featured.results as any[],
       trending: trending.results as any[],
@@ -237,8 +243,10 @@ app.get('/', async (c) => {
       popular: popular.results as any[],
       ongoing: ongoing.results as any[],
       schedule: schedule.results as any[],
+      siteName: settings.site_name,
     }))
   } catch (e: any) {
+    const siteName = c.env?.SITE_NAME || 'DonghuaLand'
     // Show empty home page with welcome message instead of demo data
     return c.html(homePage({
       featured: [],
@@ -247,6 +255,7 @@ app.get('/', async (c) => {
       popular: [],
       ongoing: [],
       schedule: [],
+      siteName,
     }))
   }
 })
@@ -271,10 +280,12 @@ app.get('/anime/:slug', async (c) => {
 
     await db.prepare('UPDATE anime SET view_count = view_count + 1 WHERE id = ?').bind((anime as any).id).run()
 
+    const settings = await getSiteSettings(db, c.env?.SITE_NAME)
     return c.html(animePage({
       anime: anime as any,
       episodes: episodes.results as any[],
-      related: related.results as any[]
+      related: related.results as any[],
+      siteName: settings.site_name,
     }))
   } catch (e: any) {
     return c.html(notFoundPage(), 404)
@@ -311,12 +322,14 @@ app.get('/watch/:watchpath{.+-episode-[0-9]+}', async (c) => {
 
     await db.prepare('UPDATE episodes SET view_count = view_count + 1 WHERE id = ?').bind((episode as any).id).run()
 
+    const settings = await getSiteSettings(db, c.env?.SITE_NAME)
     return c.html(watchPage({
       anime: anime as any,
       episode: episode as any,
       allEpisodes: allEps,
       prevEp,
-      nextEp
+      nextEp,
+      siteName: settings.site_name,
     }))
   } catch (e: any) {
     return c.html(notFoundPage(), 404)
@@ -361,16 +374,20 @@ app.get('/search', async (c) => {
     ])
     const total = (countRes as any)?.total || 0
 
+    const settings = await getSiteSettings(db, c.env?.SITE_NAME)
     return c.html(searchPage({
       results: results.results as any[],
       total, page, perPage,
-      q, status, genre, type
+      q, status, genre, type,
+      siteName: settings.site_name,
     }))
   } catch (e: any) {
+    const siteName = c.env?.SITE_NAME || 'DonghuaLand'
     return c.html(searchPage({
       results: [],
       total: 0, page: 1, perPage,
-      q, status, genre, type
+      q, status, genre, type,
+      siteName,
     }))
   }
 })
@@ -393,8 +410,14 @@ app.get('/api/search/quick', async (c) => {
 })
 
 // User auth pages
-app.get('/user/login', (c) => c.html(loginPage()))
-app.get('/user/register', (c) => c.html(registerPage()))
+app.get('/user/login', async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(loginPage(settings.site_name))
+})
+app.get('/user/register', async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(registerPage(settings.site_name))
+})
 app.get('/user/forgot', (c) => c.redirect('/user/login?forgot=1'))
 
 // ============================================================
@@ -418,36 +441,49 @@ app.get('/admin/panel/:section', async (c) => {
 
 // Schedule page
 app.get('/schedule', async (c) => {
-  return c.html(schedulePage())
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(schedulePage(settings.site_name))
 })
 
 // Static pages - load emails from DB settings
 app.get('/about', async (c) => {
-  const settings = await getSiteSettings(c.env?.DB)
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
   return c.html(aboutPage(settings))
 })
 app.get('/contact', async (c) => {
-  const settings = await getSiteSettings(c.env?.DB)
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
   return c.html(contactPage(settings))
 })
 app.get('/privacy', async (c) => {
-  const settings = await getSiteSettings(c.env?.DB)
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
   return c.html(privacyPage(settings))
 })
 app.get('/terms', async (c) => {
-  const settings = await getSiteSettings(c.env?.DB)
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
   return c.html(termsPage(settings))
 })
 app.get('/dmca', async (c) => {
-  const settings = await getSiteSettings(c.env?.DB)
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
   return c.html(dmcaPage(settings))
 })
 
 // User pages
-app.get('/user/watchlist', (c) => c.html(watchlistPage()))
-app.get('/user/profile', (c) => c.html(profilePage()))
-app.get('/user/history', (c) => c.html(historyPage()))
-app.get('/user/settings', (c) => c.html(settingsPage()))
+app.get('/user/watchlist', async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(watchlistPage(settings.site_name))
+})
+app.get('/user/profile', async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(profilePage(settings.site_name))
+})
+app.get('/user/history', async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(historyPage(settings.site_name))
+})
+app.get('/user/settings', async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(settingsPage(settings.site_name))
+})
 app.get('/user/membership', (c) => c.redirect('/user/register'))
 
 // Schedule API
@@ -467,6 +503,9 @@ app.get('/api/schedule', async (c) => {
 })
 
 // 404
-app.notFound((c) => c.html(notFoundPage(), 404))
+app.notFound(async (c) => {
+  const settings = await getSiteSettings(c.env?.DB, c.env?.SITE_NAME)
+  return c.html(notFoundPage(settings.site_name), 404)
+})
 
 export default app

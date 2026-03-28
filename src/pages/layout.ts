@@ -1,13 +1,28 @@
-// Layout template matching donghualand.vip exactly
+// Layout template
 
-export function layout(title: string, content: string, extraHead: string = ''): string {
+export function layout(title: string, content: string, extraHead: string = '', siteName: string = 'DonghuaLand'): string {
+  const siteDesc = 'Stream anime online for free in HD — new episodes daily, no subscription needed. Watch your favorite anime anytime, anywhere.'
+  const ogImage = '/static/og-banner.jpg'
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>${title}</title>
-<meta name="description" content="Watch Chinese Anime (Donghua) online for free in HD. Stream the latest episodes.">
+<meta name="description" content="${siteDesc}">
+<!-- Open Graph / Social Media -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${siteDesc}">
+<meta property="og:image" content="${ogImage}">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:site_name" content="${siteName}">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${siteDesc}">
+<meta name="twitter:image" content="${ogImage}">
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +40,7 @@ ${extraHead}
     <!-- Logo -->
     <a href="/" class="logo">
       <div class="logo-icon"><i class="fas fa-dragon"></i></div>
-      <div class="logo-text">Donghua<span class="accent">Land</span></div>
+      <div class="logo-text" id="headerSiteName">${siteName}</div>
     </a>
 
     <!-- Search bar (desktop: hidden until search icon clicked) -->
@@ -162,7 +177,7 @@ ${content}
       <div class="footer-brand">
         <a href="/" class="footer-logo">
           <div class="fli"><i class="fas fa-dragon"></i></div>
-          <span id="footerSiteName">Donghua<span>Land</span></span>
+          <span id="footerSiteName">${siteName}</span>
         </a>
         <p class="footer-tagline" id="footerTagline">Your world of anime, unlocked.</p>
         <div class="footer-social" id="footerSocial">
@@ -203,7 +218,7 @@ ${content}
       </div>
     </div>
     <div class="footer-bottom">
-      <p id="footerCopy">© 2026 DonghuaLand. All rights reserved.</p>
+      <p id="footerCopy">© 2026 ${siteName}. All rights reserved.</p>
       <p>This site only provides web page services and does not store any content.</p>
     </div>
   </div>

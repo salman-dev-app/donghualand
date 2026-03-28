@@ -1,6 +1,6 @@
 import { layout } from './layout'
 
-export function historyPage(): string {
+export function historyPage(siteName: string = 'DonghuaLand'): string {
   const content = `
 <div class="user-page-wrap">
   <div class="user-page-header">
@@ -65,5 +65,5 @@ export function historyPage(): string {
 })();
 </script>
 `
-  return layout('Watch History - Donghualand', content)
+  return layout(`Watch History - ${siteName}`, content, '', siteName)
 }

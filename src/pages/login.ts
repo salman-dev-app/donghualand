@@ -1,6 +1,6 @@
 import { layout } from './layout'
 
-export function loginPage(error?: string) {
+export function loginPage(siteName: string = 'DonghuaLand', error?: string) {
   const content = `
 <div class="auth-page">
   <div class="auth-card">
@@ -120,5 +120,5 @@ async function doLogin(e) {
 }
 </script>
 `
-  return layout('Sign In - Donghualand', content)
+  return layout(`Sign In - ${siteName}`, content, '', siteName)
 }

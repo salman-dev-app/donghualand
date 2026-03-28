@@ -1,6 +1,6 @@
 import { layout } from './layout'
 
-export function schedulePage(): string {
+export function schedulePage(siteName: string = 'DonghuaLand'): string {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const today = new Date().getDay()
   // Convert JS day (0=Sun) to our schedule (0=Mon)
@@ -82,5 +82,5 @@ document.querySelectorAll('.sched-tab').forEach(btn => {
 });
 </script>
 `
-  return layout('Schedule - Donghualand', content)
+  return layout(`Schedule - ${siteName}`, content, '', siteName)
 }

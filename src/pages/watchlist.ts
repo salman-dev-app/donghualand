@@ -1,7 +1,7 @@
 import { layout } from './layout'
 import { animeCard } from './components'
 
-export function watchlistPage(): string {
+export function watchlistPage(siteName: string = 'DonghuaLand'): string {
   const content = `
 <div class="user-page-wrap">
   <div class="user-page-header">
@@ -83,5 +83,5 @@ export function watchlistPage(): string {
 })();
 </script>
 `
-  return layout('My Watchlist - Donghualand', content)
+  return layout(`My Watchlist - ${siteName}`, content, '', siteName)
 }

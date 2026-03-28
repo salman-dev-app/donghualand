@@ -62,7 +62,7 @@ export function aboutPage(settings: SiteSettings = {}): string {
   </div>
 </div>
 `
-  return layout(`About Us - ${siteName}`, content)
+  return layout(`About Us - ${siteName}`, content, '', siteName)
 }
 
 export function contactPage(settings: SiteSettings = {}): string {
@@ -178,7 +178,7 @@ window.submitContact = function(e) {
 };
 </script>
 `
-  return layout(`Contact Us - ${siteName}`, content)
+  return layout(`Contact Us - ${siteName}`, content, '', siteName)
 }
 
 export function privacyPage(settings: SiteSettings = {}): string {
@@ -224,7 +224,7 @@ export function privacyPage(settings: SiteSettings = {}): string {
   </div>
 </div>
 `
-  return layout(`Privacy Policy - ${siteName}`, content)
+  return layout(`Privacy Policy - ${siteName}`, content, '', siteName)
 }
 
 export function termsPage(settings: SiteSettings = {}): string {
@@ -267,7 +267,7 @@ export function termsPage(settings: SiteSettings = {}): string {
   </div>
 </div>
 `
-  return layout(`Terms of Service - ${siteName}`, content)
+  return layout(`Terms of Service - ${siteName}`, content, '', siteName)
 }
 
 export function dmcaPage(settings: SiteSettings = {}): string {
@@ -315,5 +315,5 @@ export function dmcaPage(settings: SiteSettings = {}): string {
   </div>
 </div>
 `
-  return layout(`DMCA Notice - ${siteName}`, content)
+  return layout(`DMCA Notice - ${siteName}`, content, '', siteName)
 }
