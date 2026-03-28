@@ -217,35 +217,43 @@ app.get('/', async (c) => {
     if (!db) throw new Error('Database not configured')
 
     const featured = await db.prepare(`
-      SELECT * FROM anime WHERE is_featured = 1 ORDER BY updated_at DESC LIMIT 5
+      SELECT a.*, MAX(e.episode_number) as latest_episode FROM anime a
+      LEFT JOIN episodes e ON a.id = e.anime_id
+      WHERE a.is_featured = 1 GROUP BY a.id ORDER BY a.updated_at DESC LIMIT 5
     `).all()
 
     const trending = await db.prepare(`
-      SELECT * FROM anime WHERE is_trending = 1 ORDER BY view_count DESC LIMIT 10
+      SELECT a.*, MAX(e.episode_number) as latest_episode FROM anime a
+      LEFT JOIN episodes e ON a.id = e.anime_id
+      WHERE a.is_trending = 1 GROUP BY a.id ORDER BY a.view_count DESC LIMIT 10
     `).all()
 
     const recent = await db.prepare(`
-      SELECT a.*, MAX(e.created_at) as latest_ep_date, MAX(e.episode_number) as latest_ep,
+      SELECT a.*, MAX(e.created_at) as latest_ep_date, MAX(e.episode_number) as latest_episode,
       COUNT(e.id) as total_eps
       FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id
-      GROUP BY a.id ORDER BY latest_ep_date DESC LIMIT 10
+      GROUP BY a.id ORDER BY latest_ep_date DESC LIMIT 12
     `).all()
 
     const popular = await db.prepare(`
-      SELECT * FROM anime ORDER BY view_count DESC LIMIT 12
+      SELECT a.*, MAX(e.episode_number) as latest_episode FROM anime a
+      LEFT JOIN episodes e ON a.id = e.anime_id
+      GROUP BY a.id ORDER BY a.view_count DESC LIMIT 12
     `).all()
 
     const ongoing = await db.prepare(`
-      SELECT a.*, MAX(e.episode_number) as latest_ep
+      SELECT a.*, MAX(e.episode_number) as latest_episode
       FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id
       WHERE a.status = 'Ongoing'
       GROUP BY a.id ORDER BY a.updated_at DESC LIMIT 12
     `).all()
 
     const schedule = await db.prepare(`
-      SELECT s.*, a.title, a.cover_image, a.slug, a.status
+      SELECT s.*, a.title, a.cover_image, a.slug, a.status,
+      MAX(e.episode_number) as latest_episode
       FROM schedule s JOIN anime a ON s.anime_id = a.id
-      ORDER BY s.day_of_week
+      LEFT JOIN episodes e ON a.id = e.anime_id
+      GROUP BY s.id ORDER BY s.day_of_week, s.time
     `).all()
 
     return c.html(homePage({
@@ -284,7 +292,9 @@ app.get('/anime/:slug', async (c) => {
     ).bind((anime as any).id).all()
 
     const related = await db.prepare(`
-      SELECT * FROM anime WHERE id != ? ORDER BY view_count DESC LIMIT 8
+      SELECT a.*, MAX(e.episode_number) as latest_episode FROM anime a
+      LEFT JOIN episodes e ON a.id = e.anime_id
+      WHERE a.id != ? GROUP BY a.id ORDER BY a.view_count DESC LIMIT 12
     `).bind((anime as any).id).all()
 
     await db.prepare('UPDATE anime SET view_count = view_count + 1 WHERE id = ?').bind((anime as any).id).run()
@@ -329,12 +339,22 @@ app.get('/watch/:watchpath{.+-episode-[0-9]+}', async (c) => {
 
     await db.prepare('UPDATE episodes SET view_count = view_count + 1 WHERE id = ?').bind((episode as any).id).run()
 
+    // Fetch nowAiring and popular for sidebar
+    const nowAiringResult = await db.prepare(
+      'SELECT a.*, MAX(e.episode_number) as latest_episode FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id WHERE a.status = ? GROUP BY a.id ORDER BY a.view_count DESC LIMIT 8'
+    ).bind('Ongoing').all()
+    const popularResult = await db.prepare(
+      'SELECT a.*, MAX(e.episode_number) as latest_episode FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id GROUP BY a.id ORDER BY a.view_count DESC LIMIT 10'
+    ).all()
+
     return c.html(watchPage({
       anime: anime as any,
       episode: episode as any,
       allEpisodes: allEps,
       prevEp,
-      nextEp
+      nextEp,
+      nowAiring: nowAiringResult.results as any[],
+      popular: popularResult.results as any[]
     }))
   } catch (e: any) {
     return c.html(notFoundPage(), 404)
