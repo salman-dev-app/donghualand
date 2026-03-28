@@ -581,8 +581,8 @@ window.editEpisode = function(id, num, title, embed, video, airDate, membersOnly
 
 window.resetEpForm = function() {
   document.getElementById('epNum').value = '';
-  ['epTitle','epEmbed','epVideo','epThumb'].forEach(id => setVal(id, ''));
-  document.getElementById('epThumbPrev').style.display = 'none';
+  ['epTitle','epEmbed','epVideo'].forEach(id => setVal(id, ''));
+  // Thumbnail is auto-loaded from anime cover — no separate field
   const btn = document.getElementById('addEpBtn');
   btn.dataset.editId = '';
   btn.innerHTML = '<i class="fas fa-plus"></i> Add Episode';
@@ -603,7 +603,7 @@ window.addEpisode = async function() {
       title: getVal('epTitle'),
       embed_url: getVal('epEmbed'),
       video_url: getVal('epVideo'),
-      thumbnail: getVal('epThumb'),
+      thumbnail: '', // Auto-loaded from anime cover image on watch page
       air_date: document.getElementById('epDate')?.value || null,
       is_members_only: getCheck('epMembers') ? 1 : 0
     };

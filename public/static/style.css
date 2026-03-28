@@ -16,6 +16,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 a { text-decoration: none; color: inherit; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
@@ -28,7 +29,7 @@ ul, ol { list-style: none; }
 ::-webkit-scrollbar-track { background: #111; }
 ::-webkit-scrollbar-thumb { background: #6c5ce7; border-radius: 2px; }
 
-/* ---- CSS VARIABLES ---- */
+/* ---- CSS VARIABLES (Dark Mode — default) ---- */
 :root {
   --bg:         #0a0a0f;
   --bg2:        #0f0f17;
@@ -67,6 +68,85 @@ ul, ol { list-style: none; }
   --shadow: 0 4px 32px rgba(0,0,0,0.6);
   --shadow2: 0 2px 16px rgba(0,0,0,0.5);
   --trans: 0.2s ease;
+}
+
+/* ---- LIGHT MODE VARIABLES ---- */
+[data-theme="light"] {
+  --bg:         #f5f5fa;
+  --bg2:        #ededf5;
+  --bg3:        #e8e8f2;
+  --bg4:        #dcdce8;
+  --bg5:        #d4d4e2;
+  --bg6:        #c8c8da;
+  --border:     rgba(0,0,0,0.08);
+  --border2:    rgba(0,0,0,0.12);
+  --border3:    rgba(0,0,0,0.18);
+  --purple:     #6c5ce7;
+  --purple2:    #5a4bd1;
+  --purple3:    #7c6ef0;
+  --purple-dim: rgba(108,92,231,0.12);
+  --purple-glow:rgba(108,92,231,0.28);
+  --text1: #12121a;
+  --text2: #2e2e42;
+  --text3: #666680;
+  --text4: #9999b0;
+  --green: #00a86b;
+  --green2: rgba(0,168,107,0.18);
+  --red:   #d63030;
+  --orange:#d4870a;
+  --gold:  #c8a800;
+  --blue:  #2674b8;
+  --shadow: 0 4px 32px rgba(0,0,0,0.14);
+  --shadow2: 0 2px 16px rgba(0,0,0,0.10);
+}
+
+/* Light mode body */
+[data-theme="light"] body {
+  background: var(--bg);
+  color: var(--text1);
+}
+
+/* Light mode header */
+[data-theme="light"] .site-header {
+  background: rgba(245,245,250,0.92);
+  border-bottom-color: var(--border);
+}
+[data-theme="light"] .site-header.scrolled {
+  background: rgba(245,245,250,0.98);
+  box-shadow: 0 1px 24px rgba(0,0,0,0.12);
+}
+
+/* Light mode search */
+[data-theme="light"] .h-search-input {
+  background: var(--bg4);
+  border-color: var(--border2);
+  color: var(--text1);
+}
+[data-theme="light"] .search-overlay-box {
+  background: var(--bg2);
+}
+[data-theme="light"] .sovl-result:hover { background: var(--bg4); }
+
+/* Light mode bottom nav */
+[data-theme="light"] .bottom-nav {
+  background: rgba(245,245,250,0.97);
+  border-top-color: var(--border2);
+}
+
+/* Light mode mobile drawer */
+[data-theme="light"] .mob-drawer { background: var(--bg2); }
+
+/* Light mode scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track { background: var(--bg3); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: var(--purple); }
+
+/* Smooth transition for theme changes on key elements */
+.site-header, .bottom-nav, .mob-drawer,
+.sidebar-card, .watch-meta-card, .server-row,
+.ep-nav-btn, .ep-grid-box, .ep-grid-item,
+.comments-section, .acard, .recent-item,
+.filter-bar, .auth-card, .footer-inner {
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 /* ================================================================
@@ -284,6 +364,26 @@ ul, ol { list-style: none; }
 }
 .desktop-search-btn:hover,
 .desktop-search-btn.active { border-color: var(--purple); color: var(--purple2); background: var(--purple-dim); }
+
+/* ---- THEME TOGGLE BUTTON ---- */
+.theme-toggle-btn {
+  display: flex;
+  width: 34px; height: 34px; border-radius: var(--r8);
+  background: var(--bg4); border: 1px solid var(--border2);
+  color: var(--text2); font-size: 14px;
+  align-items: center; justify-content: center;
+  transition: var(--trans); flex-shrink: 0; cursor: pointer;
+}
+.theme-toggle-btn:hover {
+  border-color: var(--purple); color: var(--purple2); background: var(--purple-dim);
+}
+[data-theme="light"] .theme-toggle-btn {
+  border-color: var(--border2); color: var(--orange);
+  background: rgba(241,196,15,0.1);
+}
+[data-theme="light"] .theme-toggle-btn:hover {
+  border-color: var(--orange); background: rgba(241,196,15,0.2);
+}
 
 /* Mobile search icon button (shown on mobile) */
 .mob-search-btn {
@@ -1060,8 +1160,8 @@ section.hero-slider + section.hero-slider {
 }
 .wm-action-btn:hover { border-color: var(--purple); color: var(--purple2); }
 
-/* Watch sidebar */
-.watch-sidebar {}
+/* Watch sidebar — kept for fallback, hidden in new layout */
+.watch-sidebar { display: none; }
 .sidebar-card {
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: var(--r10); overflow: hidden; margin-bottom: 12px;
@@ -1071,21 +1171,109 @@ section.hero-slider + section.hero-slider {
   font-size: 13px; font-weight: 700; color: var(--text1);
   display: flex; align-items: center; justify-content: space-between;
 }
-.ep-list { max-height: 440px; overflow-y: auto; }
-.ep-list-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px; border-bottom: 1px solid var(--border);
-  cursor: pointer; transition: var(--trans);
-  border-left: 3px solid transparent;
+
+/* ================================================================
+   NEW EPISODE GRID (Watch Page — below player)
+================================================================ */
+.ep-grid-section {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r10); overflow: hidden;
+  margin-bottom: 14px;
 }
-.ep-list-item:last-child { border-bottom: none; }
-.ep-list-item:hover { background: var(--bg4); }
-.ep-list-item.active { background: var(--purple-dim); border-left-color: var(--purple); }
-.ep-list-num { font-size: 11px; font-weight: 800; color: var(--text3); min-width: 28px; }
-.ep-list-item.active .ep-list-num { color: var(--purple2); }
-.ep-list-name { font-size: 12px; color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ep-list-item.active .ep-list-name { color: var(--text1); }
-.ep-list-now { font-size: 10px; color: var(--purple2); flex-shrink: 0; }
+.ep-grid-head {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+.ep-grid-title {
+  font-size: 13px; font-weight: 800; color: var(--text1);
+  display: flex; align-items: center; gap: 7px;
+}
+.ep-grid-title i { color: var(--purple2); }
+.ep-grid-count {
+  font-size: 11px; color: var(--text3); font-weight: 400;
+}
+/* Search input inside ep-grid header */
+.ep-grid-search-wrap {
+  position: relative; flex-shrink: 0;
+}
+.ep-grid-search {
+  background: var(--bg4); border: 1px solid var(--border2);
+  border-radius: var(--r50); padding: 6px 12px 6px 30px;
+  color: var(--text1); font-size: 12px; outline: none;
+  width: 160px; transition: border-color var(--trans), width var(--trans);
+}
+.ep-grid-search:focus { border-color: var(--purple); width: 200px; }
+.ep-grid-search::placeholder { color: var(--text3); }
+.ep-grid-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text4); font-size: 11px; pointer-events: none;
+}
+/* The grid itself: wrap, no scroll */
+.ep-grid-body {
+  padding: 10px 12px 12px;
+}
+.ep-grid-wrap {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+/* Each episode box */
+.ep-grid-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0;
+  width: 62px;
+  background: var(--bg4); border: 1.5px solid var(--border2);
+  border-radius: var(--r8); overflow: hidden;
+  text-decoration: none; cursor: pointer;
+  transition: border-color var(--trans), background var(--trans), transform 0.15s;
+  flex-shrink: 0;
+}
+.ep-grid-item:hover {
+  border-color: rgba(108,92,231,0.5);
+  background: var(--bg5);
+  transform: translateY(-2px);
+}
+.ep-grid-item.active {
+  border-color: var(--purple);
+  background: var(--purple-dim);
+}
+/* Anime cover thumbnail inside episode box */
+.ep-grid-thumb {
+  width: 100%; aspect-ratio: 2/3;
+  object-fit: cover; display: block;
+  flex-shrink: 0;
+}
+/* Episode number label */
+.ep-grid-num {
+  font-size: 10px; font-weight: 800;
+  color: var(--text2); text-align: center;
+  padding: 4px 2px 5px;
+  line-height: 1;
+  width: 100%;
+}
+.ep-grid-item.active .ep-grid-num { color: var(--purple2); }
+/* Playing indicator */
+.ep-grid-item.active .ep-grid-thumb-wrap::after {
+  content: '';
+}
+.ep-grid-now {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--purple); border-radius: 0;
+}
+
+/* Empty search state */
+.ep-grid-empty {
+  padding: 16px; text-align: center;
+  font-size: 13px; color: var(--text3);
+  display: none;
+}
+.ep-grid-empty.show { display: block; }
+
+/* ================================================================
+   WATCH PAGE — Full-width single column (no sidebar grid)
+================================================================ */
+.watch-layout { display: grid; grid-template-columns: 1fr; gap: 0; }
+.player-section { width: 100%; }
 
 /* ================================================================
    SEARCH / BROWSE PAGE
@@ -1686,8 +1874,12 @@ section.hero-slider + section.hero-slider {
   .watch-meta-card { border-radius: 0; border-left: none; border-right: none; }
   .server-row { border-radius: 0; border-left: none; border-right: none; }
   .ep-nav-row { padding: 0 12px; }
-  .watch-sidebar { padding: 0 12px 12px; }
-  .ep-list { max-height: 280px; }
+  .watch-sidebar { display: none; }
+  /* Episode grid on mobile */
+  .ep-grid-section { border-radius: 0; border-left: none; border-right: none; }
+  .ep-grid-item { width: 56px; }
+  .ep-grid-search { width: 130px; }
+  .ep-grid-search:focus { width: 160px; }
 
   /* Search */
   .search-wrap { padding: 16px 12px; }

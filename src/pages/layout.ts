@@ -438,15 +438,9 @@ export function layout(title: string, content: string, extraHead: string = '', d
 <link rel="stylesheet" href="/static/style.css">
 <script>
   (function(){
-    const mode = 'both';
-    const stored = localStorage.getItem('theme');
-    if (mode === 'dark') {
-      document.documentElement.setAttribute('data-theme','dark');
-    } else if (mode === 'light') {
-      document.documentElement.setAttribute('data-theme','light');
-    } else {
-      document.documentElement.setAttribute('data-theme', stored || 'dark');
-    }
+    // Use siteTheme key (consistent with app.js)
+    var stored = localStorage.getItem('siteTheme') || localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', stored);
   })();
 </script>
 <style>
@@ -463,6 +457,8 @@ ${extraHead}
 ${NAVBAR_HTML}
 
 <main class="main-content">
+<!-- ==================== BROADCAST BANNER ==================== -->
+<div id="broadcastBanner" style="display:none;"></div>
 ${content}
 </main>
 

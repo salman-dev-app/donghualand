@@ -20,18 +20,8 @@ window.showToast = function(msg, type) {
 function initThemeToggle() {
   var btn = document.getElementById('themeToggle');
   if (!btn) return;
-  
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }
-  
-  // Apply saved theme on load
-  var saved = localStorage.getItem('theme') || 'dark';
-  applyTheme(saved);
-  
   btn.addEventListener('click', function() {
-    var current = document.documentElement.getAttribute('data-theme');
+    var current = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(current === 'dark' ? 'light' : 'dark');
   });
 }
@@ -318,8 +308,127 @@ window.toggleWatchlist = function(slug, title, cover, type) {
   }
 };
 
+// Init watchlist button state on anime/watch pages
+function initWatchlistBtn() {
+  const btn = document.getElementById('wlBtn');
+  if (!btn) return;
+  const slug = btn.dataset.slug;
+  if (!slug) return;
+  if (isInWatchlist(slug)) {
+    btn.innerHTML = '<i class="fas fa-bookmark"></i> In Watchlist';
+    btn.classList.add('active');
+  }
+}
+
+// ============ BROADCAST BANNER ============
+function initBroadcastBanner() {
+  var banner = document.getElementById('broadcastBanner');
+  if (!banner) return;
+  fetch('/api/broadcasts/active')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.data || d.data.length === 0) return;
+      var typeStyles = {
+        info:    { bg: '#0d1f33', border: 'rgba(52,152,219,0.6)', color: '#74b9ff', icon: 'fa-info-circle' },
+        success: { bg: '#0d2a1a', border: 'rgba(0,208,132,0.6)',  color: '#00d084', icon: 'fa-check-circle' },
+        warning: { bg: '#2a1f05', border: 'rgba(241,196,15,0.6)', color: '#fdcb6e', icon: 'fa-exclamation-triangle' },
+        error:   { bg: '#2a0d0d', border: 'rgba(232,64,64,0.6)',  color: '#ff7675', icon: 'fa-times-circle' },
+      };
+      var bc = d.data[0];
+      var ts = typeStyles[bc.type] || typeStyles.info;
+      banner.style.display = 'block';
+      banner.style.background = ts.bg;
+      banner.style.borderBottom = '2px solid ' + ts.border;
+      banner.style.padding = '11px 16px';
+      banner.style.textAlign = 'center';
+      banner.style.width = '100%';
+      var msg = bc.message.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      banner.innerHTML =
+        '<div style="max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;position:relative;">' +
+          '<i class="fas ' + ts.icon + '" style="color:' + ts.color + ';flex-shrink:0;font-size:14px;"></i>' +
+          '<span style="font-size:13px;color:' + ts.color + ';font-weight:500;line-height:1.4;">' + msg + '</span>' +
+          '<button id="broadcastDismiss" style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:none;border:none;color:' + ts.color + ';cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;opacity:0.75;" title="Dismiss">&times;</button>' +
+        '</div>';
+      var dismissBtn = document.getElementById('broadcastDismiss');
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', function() {
+          var b = document.getElementById('broadcastBanner');
+          if (b) { b.style.opacity = '0'; b.style.transition = 'opacity 0.3s'; setTimeout(function(){ b.style.display = 'none'; }, 300); }
+        });
+      }
+    })
+    .catch(function() {});
+}
+
+// ============ FOOTER SOCIAL LINKS ============
+function initFooterSocials() {
+  const socialContainer = document.getElementById('footerSocial');
+  if (!socialContainer) return;
+  fetch('/api/site-settings')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.data) return;
+      const s = d.data;
+      const links = [
+        { key: 'social_discord',   icon: 'fab fa-discord',   color: '#5865F2', label: 'Discord',   url: (v) => v.startsWith('http') ? v : 'https://discord.gg/' + v },
+        { key: 'social_twitter',   icon: 'fab fa-twitter',   color: '#1DA1F2', label: 'Twitter',   url: (v) => v.startsWith('http') ? v : 'https://twitter.com/' + v.replace('@','') },
+        { key: 'social_reddit',    icon: 'fab fa-reddit',    color: '#FF4500', label: 'Reddit',    url: (v) => v.startsWith('http') ? v : 'https://reddit.com/r/' + v.replace('r/','') },
+        { key: 'social_telegram',  icon: 'fab fa-telegram',  color: '#229ED9', label: 'Telegram',  url: (v) => v.startsWith('http') ? v : 'https://t.me/' + v.replace('@','') },
+        { key: 'social_facebook',  icon: 'fab fa-facebook',  color: '#1877F2', label: 'Facebook',  url: (v) => v.startsWith('http') ? v : 'https://facebook.com/' + v },
+        { key: 'social_youtube',   icon: 'fab fa-youtube',   color: '#FF0000', label: 'YouTube',   url: (v) => v.startsWith('http') ? v : 'https://youtube.com/' + v },
+        { key: 'social_instagram', icon: 'fab fa-instagram', color: '#E1306C', label: 'Instagram', url: (v) => v.startsWith('http') ? v : 'https://instagram.com/' + v },
+        { key: 'social_tiktok',    icon: 'fab fa-tiktok',    color: '#ffffff',  label: 'TikTok',   url: (v) => v.startsWith('http') ? v : 'https://tiktok.com/@' + v.replace('@','') },
+      ];
+      const html = links
+        .filter(l => s[l.key] && s[l.key].trim())
+        .map(l => `<a href="${l.url(s[l.key].trim())}" target="_blank" rel="noopener" class="footer-social-link" title="${l.label}" style="color:${l.color}"><i class="${l.icon}"></i></a>`)
+        .join('');
+      socialContainer.innerHTML = html || '';
+    })
+    .catch(() => {});
+}
+
+// ============ THEME TOGGLE (DARK / LIGHT) ============
+(function initThemeEarly() {
+  const saved = localStorage.getItem('siteTheme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('siteTheme', theme);
+  // Update new navbar theme toggle (lucide icon)
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    var sunIcon = btn.querySelector('.icon-sun');
+    var moonIcon = btn.querySelector('.icon-moon');
+    if (sunIcon) sunIcon.style.display = theme === 'light' ? 'none' : '';
+    if (moonIcon) moonIcon.style.display = theme === 'light' ? '' : 'none';
+  }
+  // Update old theme toggle button if present
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+  }
+  const oldBtn = document.getElementById('themeToggleBtn');
+  if (oldBtn) {
+    oldBtn.title = theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode';
+  }
+}
+
+window.toggleTheme = function() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+};
+
+function initTheme() {
+  const saved = localStorage.getItem('siteTheme') || 'dark';
+  applyTheme(saved);
+}
+
 // ============ INIT ============
 document.addEventListener('DOMContentLoaded', function() {
+  initTheme();
   initThemeToggle();
   initNavbarScroll();
   initMobileMenu();
