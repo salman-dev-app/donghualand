@@ -5,7 +5,7 @@ export function adminLoginPage() {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Login</title>
+<title>Admin Login - DonghuaLand</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 <style>
@@ -204,7 +204,7 @@ h1.login-title {
   <div class="login-card">
     <a href="/" class="login-logo">
       <div class="login-logo-icon"><i class="fas fa-dragon"></i></div>
-      <div class="login-logo-text">Admin<span>Panel</span></div>
+      <div class="login-logo-text">Donghua<span>Land</span></div>
     </a>
     <div class="login-badge">Admin Panel</div>
 
@@ -337,7 +337,7 @@ export function adminPanelPage(section: string = 'dashboard') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel</title>
+<title>Admin Panel - DonghuaLand</title>
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/static/style.css">

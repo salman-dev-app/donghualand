@@ -1,8 +1,8 @@
 // Layout template
 
-export function layout(title: string, content: string, extraHead: string = '', siteName: string = 'ANIME WORLD', siteUrl: string = ''): string {
+export function layout(title: string, content: string, extraHead: string = '', siteName: string = 'DonghuaLand'): string {
   const siteDesc = 'Stream anime online for free in HD — new episodes daily, no subscription needed. Watch your favorite anime anytime, anywhere.'
-  const ogImage = siteUrl ? `${siteUrl}/static/og-banner.jpg` : '/static/og-banner.jpg'
+  const ogImage = '/static/og-banner.jpg'
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +18,6 @@ export function layout(title: string, content: string, extraHead: string = '', s
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="720">
 <meta property="og:site_name" content="${siteName}">
-${siteUrl ? `<meta property="og:url" content="${siteUrl}">` : ''}
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${title}">

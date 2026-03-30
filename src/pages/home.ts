@@ -9,9 +9,8 @@ export function homePage(data: {
   ongoing: any[]
   schedule: any[]
   siteName?: string
-  siteUrl?: string
 }) {
-  const { featured, trending, recent, popular, ongoing, schedule, siteName = 'ANIME WORLD', siteUrl = '' } = data
+  const { featured, trending, recent, popular, ongoing, schedule, siteName = 'DonghuaLand' } = data
 
   // Hero slider - use featured array (up to 5)
   const heroItems = featured.length > 0 ? featured.slice(0, 5) : []
@@ -124,7 +123,7 @@ export function homePage(data: {
   <div style="text-align:center; padding:40px 20px;">
     <i class="fas fa-dragon" style="font-size:60px; color:var(--purple); margin-bottom:20px; display:block;"></i>
     <h1 style="font-size:32px; font-weight:900; margin-bottom:10px;">Welcome to ${siteName}</h1>
-    <p style="color:var(--text3); font-size:15px; margin-bottom:24px;">Stream the best Chinese anime online, free & in HD.</p>
+    <p style="color:var(--text3); font-size:15px; margin-bottom:24px;">Your world of Chinese anime, unlocked.</p>
     <a href="/search" class="btn-watch" style="display:inline-flex;"><i class="fas fa-compass"></i> Browse Anime</a>
   </div>
 </section>`
@@ -228,5 +227,5 @@ ${trending.length > 0 ? `
 ${scheduleSection}
 `
 
-  return layout(`${siteName} - Free Anime Streaming Online`, content, '', siteName, siteUrl)
+  return layout(`${siteName} - Free Anime Streaming Online`, content, '', siteName)
 }

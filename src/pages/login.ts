@@ -1,14 +1,15 @@
 import { layout } from './layout'
 
-export function loginPage(siteName: string = 'ANIME WORLD', error?: string, siteUrl: string = '') {
+export function loginPage(siteName: string = 'DonghuaLand', error?: string) {
   const content = `
 <div class="auth-page">
   <div class="auth-card">
     <!-- Logo -->
     <a href="/" class="auth-logo">
       <div class="li"><i class="fas fa-dragon"></i></div>
-      ${siteName}
+      Donghua<span>Land</span>
     </a>
+    <p class="auth-sub">Your world of Chinese anime, unlocked.</p>
 
     <h2 class="auth-title">Sign In</h2>
     <p style="text-align:center; font-size:13px; color:var(--text3); margin-bottom:24px;">Welcome back! Sign in to your account.</p>
@@ -119,5 +120,5 @@ async function doLogin(e) {
 }
 </script>
 `
-  return layout(`Sign In - ${siteName}`, content, '', siteName, siteUrl)
+  return layout(`Sign In - ${siteName}`, content, '', siteName)
 }
