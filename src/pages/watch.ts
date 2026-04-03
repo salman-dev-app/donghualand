@@ -52,7 +52,14 @@ ${breadcrumb([
   <!-- ====== VIDEO PLAYER SECTION ====== -->
   <div class="player-section">
 
-    <!-- Episode Nav -->
+    <!-- Video Player Box -->
+    <div class="player-box" id="playerBox">
+      <div style="position:relative; width:100%; height:100%;">
+        ${playerHTML}
+      </div>
+    </div>
+
+    <!-- Episode Nav (below player) -->
     <div class="ep-nav-row">
       ${prevEp
         ? `<a href="/watch/${anime.slug}-episode-${prevEp.episode_number}" class="ep-nav-btn"><i class="fas fa-chevron-left"></i> Prev</a>`
@@ -63,13 +70,6 @@ ${breadcrumb([
       ${nextEp
         ? `<a href="/watch/${anime.slug}-episode-${nextEp.episode_number}" class="ep-nav-btn">Next <i class="fas fa-chevron-right"></i></a>`
         : `<span class="ep-nav-btn disabled">Next <i class="fas fa-chevron-right"></i></span>`}
-    </div>
-
-    <!-- Video Player Box -->
-    <div class="player-box" id="playerBox">
-      <div style="position:relative; width:100%; height:100%;">
-        ${playerHTML}
-      </div>
     </div>
 
     <!-- Server Selector -->
@@ -278,11 +278,18 @@ function filterCrEpisodes(val) {
   if (empty) empty.style.display = found === 0 ? 'block' : 'none';
 }
 
-// Auto-scroll to active episode on load
+// Auto-scroll to active episode on load (inside the episode list container, no page scroll)
 document.addEventListener('DOMContentLoaded', function() {
   const active = document.querySelector('.cr-ep-item.active');
   if (active) {
-    active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    const list = document.getElementById('crEpList');
+    if (list) {
+      // Scroll only within the episode list container, never the page
+      const itemTop = active.offsetTop;
+      const listHeight = list.clientHeight;
+      const itemHeight = active.clientHeight;
+      list.scrollTop = itemTop - (listHeight / 2) + (itemHeight / 2);
+    }
   }
   if (window.initWatchlistBtn) window.initWatchlistBtn();
   initComments();

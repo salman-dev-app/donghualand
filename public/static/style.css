@@ -1006,9 +1006,9 @@ section.hero-slider + section.hero-slider {
 .s-btn.active { background: var(--purple); border-color: var(--purple); color: #fff; }
 .s-btn:hover:not(.active) { border-color: var(--purple); color: var(--purple2); }
 
-/* Episode nav */
+/* Episode nav (below video player) */
 .ep-nav-row {
-  display: flex; gap: 8px; margin-bottom: 12px;
+  display: flex; gap: 8px; margin-top: 10px; margin-bottom: 12px;
 }
 .ep-nav-btn {
   display: flex; align-items: center; gap: 6px;
