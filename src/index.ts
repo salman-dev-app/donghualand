@@ -492,15 +492,32 @@ app.get('/user/settings', async (c) => {
 })
 app.get('/user/membership', (c) => c.redirect('/user/register'))
 
-// Schedule API
+// Schedule API — public endpoint
 app.get('/api/schedule', async (c) => {
   const db = c.env?.DB
   try {
     if (!db) throw new Error('No DB')
+    // Ensure new columns exist (backward-compatible migration)
+    try { await db.prepare('ALTER TABLE schedule ADD COLUMN next_episode INTEGER').run() } catch {}
+    try { await db.prepare('ALTER TABLE schedule ADD COLUMN notes TEXT').run() } catch {}
     const data = await db.prepare(`
-      SELECT s.*, a.title, a.cover_image, a.slug, a.status
-      FROM schedule s JOIN anime a ON s.anime_id = a.id
-      ORDER BY s.day_of_week, s.air_time
+      SELECT s.id, s.anime_id, s.day_of_week, s.air_time, s.next_episode, s.notes,
+             a.title, a.title_native, a.cover_image, a.slug, a.status, a.type, a.rating
+      FROM schedule s
+      JOIN anime a ON s.anime_id = a.id
+      ORDER BY
+        CASE s.day_of_week
+          WHEN 'Monday'    THEN 1
+          WHEN 'Tuesday'   THEN 2
+          WHEN 'Wednesday' THEN 3
+          WHEN 'Thursday'  THEN 4
+          WHEN 'Friday'    THEN 5
+          WHEN 'Saturday'  THEN 6
+          WHEN 'Sunday'    THEN 7
+          ELSE 8
+        END,
+        s.air_time ASC NULLS LAST,
+        a.title ASC
     `).all()
     return c.json({ success: true, data: data.results || [] })
   } catch (e: any) {

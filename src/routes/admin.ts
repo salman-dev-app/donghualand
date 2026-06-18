@@ -334,13 +334,29 @@ adminRoutes.delete('/users/:id', requireAdmin, async (c) => {
 })
 
 // ============ SCHEDULE ============
+
+// Helper: ensure schedule has next_episode and notes columns (migration guard)
+async function ensureScheduleColumns(db: D1Database) {
+  try {
+    await db.prepare('ALTER TABLE schedule ADD COLUMN next_episode INTEGER').run()
+  } catch { /* column already exists */ }
+  try {
+    await db.prepare('ALTER TABLE schedule ADD COLUMN notes TEXT').run()
+  } catch { /* column already exists */ }
+}
+
 adminRoutes.get('/schedule', requireAdmin, async (c) => {
   const db = c.env.DB
   try {
+    await ensureScheduleColumns(db)
     const data = await db.prepare(`
-      SELECT s.*, a.title, a.cover_image, a.slug
+      SELECT s.*, a.title, a.cover_image, a.slug, a.status
       FROM schedule s JOIN anime a ON s.anime_id = a.id
-      ORDER BY s.day_of_week
+      ORDER BY CASE s.day_of_week
+        WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+        WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
+        WHEN 'Sunday' THEN 7 ELSE 8 END,
+        s.air_time ASC NULLS LAST
     `).all()
     return c.json({ success: true, data: data.results })
   } catch (e: any) { return c.json({ error: e.message }, 500) }
@@ -349,11 +365,40 @@ adminRoutes.get('/schedule', requireAdmin, async (c) => {
 adminRoutes.post('/schedule', requireAdmin, async (c) => {
   const db = c.env.DB
   try {
-    const { anime_id, day_of_week, air_time } = await c.req.json()
+    await ensureScheduleColumns(db)
+    const { anime_id, day_of_week, air_time, next_episode, notes } = await c.req.json()
     if (!anime_id || !day_of_week) return c.json({ error: 'anime_id and day_of_week required' }, 400)
     await db.prepare(
-      'INSERT OR REPLACE INTO schedule (anime_id, day_of_week, air_time) VALUES (?, ?, ?)'
-    ).bind(parseInt(anime_id), day_of_week, air_time || null).run()
+      'INSERT OR REPLACE INTO schedule (anime_id, day_of_week, air_time, next_episode, notes) VALUES (?, ?, ?, ?, ?)'
+    ).bind(
+      parseInt(anime_id), day_of_week,
+      air_time || null,
+      next_episode ? parseInt(next_episode) : null,
+      notes || null
+    ).run()
+    return c.json({ success: true })
+  } catch (e: any) { return c.json({ error: e.message }, 500) }
+})
+
+adminRoutes.put('/schedule/:id', requireAdmin, async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  try {
+    await ensureScheduleColumns(db)
+    const { anime_id, day_of_week, air_time, next_episode, notes } = await c.req.json()
+    if (!anime_id || !day_of_week) return c.json({ error: 'anime_id and day_of_week required' }, 400)
+    await db.prepare(`
+      UPDATE schedule SET
+        anime_id = ?, day_of_week = ?, air_time = ?,
+        next_episode = ?, notes = ?
+      WHERE id = ?
+    `).bind(
+      parseInt(anime_id), day_of_week,
+      air_time || null,
+      next_episode ? parseInt(next_episode) : null,
+      notes || null,
+      parseInt(id)
+    ).run()
     return c.json({ success: true })
   } catch (e: any) { return c.json({ error: e.message }, 500) }
 })

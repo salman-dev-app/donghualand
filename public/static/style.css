@@ -843,55 +843,289 @@ section.hero-slider + section.hero-slider { display: none !important; }
 .recent-genre { font-size: 10px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ================================================================
-   WEEKLY SCHEDULE
+   WEEKLY SCHEDULE — DONGHUANATION STYLE
 ================================================================ */
+
+/* ---- Schedule page wrapper ---- */
+.schedule-page-wrap {
+  max-width: 1440px; margin: 0 auto; padding: 0 20px 40px;
+}
+
+/* ---- Page hero banner ---- */
+.schedule-hero {
+  background: linear-gradient(135deg, #0d0d18 0%, #111128 50%, #16162e 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 36px 20px 0;
+  position: relative; overflow: hidden;
+}
+.schedule-hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 10% 50%, rgba(124,58,237,0.18) 0%, transparent 60%),
+              radial-gradient(ellipse at 90% 30%, rgba(79,70,229,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.schedule-hero-inner {
+  max-width: 1440px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px; position: relative; z-index: 1;
+}
+.schedule-hero-left {}
+.schedule-hero-title {
+  font-size: 28px; font-weight: 900; color: var(--text1);
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.schedule-hero-title i { color: var(--purple3); font-size: 24px; }
+.schedule-hero-subtitle {
+  font-size: 13px; color: var(--text3); line-height: 1.6;
+  max-width: 500px;
+}
+.schedule-hero-note {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 10px; padding: 7px 13px;
+  background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.25);
+  border-radius: var(--r50);
+  font-size: 11px; color: var(--purple3); font-weight: 600;
+}
+
+/* ---- Day tabs bar — sits below hero, sticky ---- */
+.sched-tabs-wrap {
+  background: rgba(8,8,16,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: var(--hh); z-index: 80;
+  padding: 0 20px;
+}
 .sched-tabs {
-  display: flex; gap: 7px; overflow-x: auto;
-  padding-bottom: 2px; margin-bottom: 18px;
+  display: flex; gap: 0; overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  max-width: 1440px; margin: 0 auto;
 }
 .sched-tabs::-webkit-scrollbar { height: 0; }
+
 .sched-tab {
-  flex-shrink: 0; padding: 8px 18px;
-  border-radius: var(--r50);
+  flex-shrink: 0; padding: 14px 20px;
   font-size: 13px; font-weight: 600; color: var(--text3);
-  background: var(--bg3); border: 1px solid var(--border2);
+  background: transparent; border: none;
+  border-bottom: 2px solid transparent;
   cursor: pointer; transition: var(--trans); white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+  position: relative; margin-bottom: -1px;
 }
+.sched-tab:hover { color: var(--text1); }
 .sched-tab.active {
+  color: var(--purple3);
+  border-bottom-color: var(--purple);
+}
+.sched-tab .today-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); display: inline-block;
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.6); }
+  50% { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+}
+.sched-tab .tab-day-num {
+  font-size: 11px; color: var(--text4); font-weight: 500;
+}
+.sched-tab.active .tab-day-num { color: var(--purple3); }
+
+/* Home page schedule tabs (inline, not sticky) */
+.section .sched-tabs {
+  position: static; background: transparent; border: none; padding: 0;
+  margin-bottom: 18px;
+}
+.section .sched-tab {
+  padding: 8px 18px; border-radius: var(--r50); border: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2); margin-bottom: 0;
+}
+.section .sched-tab.active {
   background: linear-gradient(135deg, var(--purple) 0%, #4f46e5 100%);
   border-color: var(--purple); color: #fff;
   box-shadow: 0 3px 14px var(--purple-glow2);
+  border-bottom-color: var(--purple);
 }
-.sched-tab:hover:not(.active) { color: var(--text1); border-color: var(--border3); }
 
+/* ---- Schedule day content ---- */
 .sched-day { display: none; }
-.sched-day.active { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; }
+.sched-day.active { display: block; }
 
+/* Grid layout for schedule items */
+.sched-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  padding: 24px 0;
+}
+
+/* ---- Schedule card — DonghuaNation poster style ---- */
 .sched-card {
   background: var(--bg3); border: 1px solid var(--border);
-  border-radius: var(--r10); overflow: hidden;
-  display: block; transition: var(--trans); cursor: pointer;
+  border-radius: var(--r12); overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  cursor: pointer; text-decoration: none;
 }
 .sched-card:hover {
-  border-color: rgba(124,58,237,0.4);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  border-color: rgba(124,58,237,0.5);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,58,237,0.15);
 }
-.sched-poster { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
-.sched-info { padding: 9px; }
-.sched-name {
-  font-size: 11px; font-weight: 700; color: var(--text1);
-  line-height: 1.3; margin-bottom: 4px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.sched-poster {
+  width: 100%; aspect-ratio: 2/3; object-fit: cover;
+  display: block; transition: transform 0.35s;
 }
-.sched-time { font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
-.sched-note { font-size: 12px; color: var(--text3); margin-bottom: 16px; line-height: 1.6; }
+.sched-card:hover .sched-poster { transform: scale(1.04); }
+.sched-poster-wrap {
+  position: relative; overflow: hidden; aspect-ratio: 2/3;
+}
+.sched-poster-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, transparent 50%);
+  display: flex; align-items: flex-end; padding: 8px;
+  opacity: 0; transition: opacity 0.25s;
+}
+.sched-card:hover .sched-poster-overlay { opacity: 1; }
+.sched-poster-play {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--purple); display: flex;
+  align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; padding-left: 2px;
+  box-shadow: 0 3px 12px rgba(124,58,237,0.6);
+}
+
+.sched-info {
+  padding: 9px 10px 11px;
+  display: flex; flex-direction: column; gap: 5px;
+  flex: 1;
+}
+.sched-title {
+  font-size: 11.5px; font-weight: 700; color: var(--text1);
+  line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sched-time {
+  font-size: 10px; color: var(--text3);
+  display: flex; align-items: center; gap: 4px;
+}
+.sched-time i { color: var(--purple3); font-size: 9px; }
+.sched-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px; border-radius: 4px;
+  font-size: 9px; font-weight: 800; text-transform: uppercase;
+  background: rgba(16,185,129,0.15); color: var(--green);
+  border: 1px solid rgba(16,185,129,0.3);
+  width: fit-content;
+}
+
+/* ---- Schedule note ---- */
+.sched-note {
+  font-size: 12px; color: var(--text3); margin-bottom: 16px; line-height: 1.6;
+}
+
+/* ---- Schedule empty state ---- */
 .sched-empty {
-  grid-column: 1 / -1; padding: 40px;
-  text-align: center; color: var(--text3); font-size: 13px;
+  padding: 60px 24px; text-align: center;
+  color: var(--text3); font-size: 13px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px;
 }
-.sched-empty i { font-size: 32px; display: block; margin-bottom: 10px; color: var(--text4); }
+.sched-empty i { font-size: 40px; color: var(--text4); }
+.sched-empty strong { color: var(--text2); font-size: 15px; }
+
+/* ---- Future releases section ---- */
+.future-releases-section {
+  margin-top: 12px; padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+.future-releases-title {
+  font-size: 16px; font-weight: 800; color: var(--text1);
+  display: flex; align-items: center; gap: 9px; margin-bottom: 18px;
+}
+.future-releases-title::before {
+  content: ''; display: block; width: 4px; height: 18px;
+  background: linear-gradient(180deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+}
+.future-list {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.future-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r12); padding: 12px 16px;
+  transition: var(--trans);
+  text-decoration: none; color: inherit;
+}
+.future-item:hover { border-color: rgba(124,58,237,0.4); background: var(--bg4); }
+.future-item-poster {
+  width: 42px; height: 60px; border-radius: var(--r8);
+  object-fit: cover; flex-shrink: 0;
+}
+.future-item-info { flex: 1; min-width: 0; }
+.future-item-title {
+  font-size: 13px; font-weight: 700; color: var(--text1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-bottom: 4px;
+}
+.future-item-meta { font-size: 11px; color: var(--text3); }
+.future-item-date {
+  font-size: 12px; font-weight: 700; color: var(--accent2);
+  white-space: nowrap; flex-shrink: 0;
+}
+.future-empty {
+  padding: 32px; text-align: center;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--r12); color: var(--text3); font-size: 13px;
+}
+
+/* ---- Schedule timeline style (home page section) ---- */
+.sched-timeline-wrap { position: relative; }
+.sched-timeline-day { margin-bottom: 24px; }
+.sched-timeline-day-hd {
+  font-size: 11px; font-weight: 800; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1.2px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 9px;
+}
+.sched-timeline-day-hd::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.sched-timeline-day-hd.today { color: var(--purple3); }
+
+/* ---- Day picker strip (DonghuaNation top bar style) ---- */
+.day-picker-strip {
+  display: flex; gap: 8px; padding: 16px 0 14px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.day-picker-strip::-webkit-scrollbar { height: 0; }
+.day-picker-btn {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 10px 14px;
+  border-radius: var(--r12);
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text3); cursor: pointer; transition: var(--trans);
+  min-width: 62px;
+}
+.day-picker-btn .dpb-day {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.day-picker-btn .dpb-date {
+  font-size: 16px; font-weight: 900; line-height: 1;
+}
+.day-picker-btn:hover { border-color: var(--purple); color: var(--text1); }
+.day-picker-btn.active {
+  background: linear-gradient(135deg, var(--purple) 0%, #4f46e5 100%);
+  border-color: var(--purple); color: #fff;
+  box-shadow: 0 4px 16px var(--purple-glow2);
+}
+.day-picker-btn.today-btn { border-color: rgba(16,185,129,0.4); }
+.day-picker-btn.today-btn .dpb-day { color: var(--green); }
+.day-picker-btn.active .dpb-day { color: rgba(255,255,255,0.8); }
 
 /* ================================================================
    ANIME DETAIL PAGE
@@ -2223,3 +2457,98 @@ section.hero-slider + section.hero-slider { display: none !important; }
 /* Card hover glow */
 .hover-glow { transition: box-shadow 0.25s, transform 0.25s; }
 .hover-glow:hover { box-shadow: 0 8px 32px rgba(124,58,237,0.25); transform: translateY(-3px); }
+
+/* ================================================================
+   SCHEDULE PAGE — RESPONSIVE ADJUSTMENTS
+================================================================ */
+@media (max-width: 1024px) {
+  .schedule-hero { padding: 28px 16px 0; }
+  .sched-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 11px; }
+}
+
+@media (max-width: 768px) {
+  .schedule-hero-title { font-size: 22px; }
+  .schedule-hero { padding: 22px 14px 0; }
+  .sched-tabs-wrap { padding: 0 12px; }
+  .sched-tab { padding: 12px 14px; font-size: 12px; }
+  .sched-grid { grid-template-columns: repeat(3, 1fr); gap: 9px; }
+  .schedule-page-wrap { padding: 0 12px 28px; }
+  .day-picker-strip { padding: 12px 0 10px; gap: 6px; }
+  .day-picker-btn { min-width: 52px; padding: 8px 10px; }
+  .day-picker-btn .dpb-date { font-size: 14px; }
+
+  /* Home schedule section responsive */
+  .home-schedule-section .sched-grid { grid-template-columns: repeat(3, 1fr); gap: 9px; }
+}
+
+@media (max-width: 480px) {
+  .sched-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .home-schedule-section .sched-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .schedule-hero-title { font-size: 18px; }
+  .schedule-hero-note { font-size: 10px; }
+}
+
+/* ================================================================
+   HOME SCHEDULE SECTION — special overrides
+================================================================ */
+.home-schedule-section .sched-tabs {
+  position: static;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 18px;
+  gap: 7px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.home-schedule-section .sched-tab {
+  padding: 8px 18px;
+  border-radius: var(--r50);
+  border: 1px solid var(--border2);
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 0;
+  font-size: 13px;
+}
+.home-schedule-section .sched-tab.active {
+  background: linear-gradient(135deg, var(--purple) 0%, #4f46e5 100%);
+  border-color: var(--purple);
+  border-bottom-color: var(--purple);
+  color: #fff;
+  box-shadow: 0 3px 14px var(--purple-glow2);
+}
+.home-schedule-section .sched-day.active { display: block; }
+.home-schedule-section .sched-grid {
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  padding: 0;
+}
+
+/* ================================================================
+   SCHEDULE ADMIN PAGE ENHANCEMENTS
+================================================================ */
+.admin-page#admin-schedule .admin-form-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (max-width: 768px) {
+  .admin-page#admin-schedule .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================================================
+   PAGE TITLE BAR — used on schedule & other pages
+================================================================ */
+.page-title {
+  font-size: 22px; font-weight: 800; color: var(--text1);
+  margin-bottom: 22px;
+  display: flex; align-items: center; gap: 11px;
+}
+.page-title i { color: var(--purple3); }
+.page-title-sub {
+  font-size: 13px; font-weight: 400; color: var(--text3);
+  margin-left: 8px;
+}
+
+/* ================================================================
+   ADMIN SCHEDULE TABLE — full width columns
+================================================================ */
+.admin-fg.full { grid-column: 1 / -1; }

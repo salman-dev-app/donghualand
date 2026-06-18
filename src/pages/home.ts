@@ -131,49 +131,86 @@ export function homePage(data: {
   </div>
 </section>`
 
-  // Schedule section
+  // ──────────────────────────────────────────────────────────────────────
+  // SCHEDULE SECTION — DonghuaNation style, placed right after hero
+  // ──────────────────────────────────────────────────────────────────────
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const schedByDay: Record<string, any[]> = {}
   days.forEach(d => { schedByDay[d] = [] })
   schedule.forEach(s => { if (schedByDay[s.day_of_week]) schedByDay[s.day_of_week].push(s) })
   const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
 
+  // Sort each day by air_time
+  days.forEach(d => {
+    schedByDay[d].sort((a: any, b: any) => {
+      if (!a.air_time) return 1
+      if (!b.air_time) return -1
+      return a.air_time.localeCompare(b.air_time)
+    })
+  })
+
   const scheduleSection = `
-<section class="section section-alt">
+<section class="section section-alt home-schedule-section">
   <div class="container">
     <div class="sec-head">
       <div class="sec-title"><i class="fas fa-calendar-alt" style="color:var(--purple3);margin-right:6px;"></i> Weekly Schedule</div>
-      <a href="/schedule" class="sec-more">View Full Schedule <i class="fas fa-chevron-right"></i></a>
+      <a href="/schedule" class="sec-more">Full Schedule <i class="fas fa-chevron-right"></i></a>
     </div>
-    <p class="sched-note"><i class="fas fa-info-circle" style="margin-right:5px;color:var(--purple3);"></i>New episodes available approximately 20–60 minutes after official broadcast time.</p>
-    <div class="sched-tabs" id="schedTabs">
-      ${days.map((d, i) => `<button class="sched-tab${i === todayIdx ? ' active' : ''}" onclick="switchDay('${d}', this)">${d.slice(0,3)}</button>`).join('')}
+    <p class="sched-note">
+      <i class="fas fa-satellite-dish" style="margin-right:5px;color:var(--purple3);"></i>
+      New episodes available approximately 20–60 minutes after official broadcast time.
+    </p>
+
+    <!-- Day tabs — DonghuaNation top-bar style -->
+    <div class="sched-tabs" id="homeSchedTabs">
+      ${days.map((d, i) => `
+      <button class="sched-tab${i === todayIdx ? ' active' : ''}" data-day="${d}" onclick="switchDay('${d}', this)">
+        ${d.slice(0, 3)}
+        ${i === todayIdx ? '<span class="today-dot"></span>' : ''}
+      </button>`).join('')}
     </div>
+
+    <!-- Day content grids -->
     ${days.map((d, i) => `
-    <div class="sched-day${i === todayIdx ? ' active' : ''}" id="sched-${d}">
-      ${schedByDay[d].length > 0 ? schedByDay[d].map(s => `
-      <a href="/anime/${s.slug}" class="sched-card">
-        <img src="${s.cover_image || ''}" alt="${s.title}" class="sched-poster" loading="lazy" onerror="this.src='https://placehold.co/130x195/111120/8b5cf6?text=?'">
-        <div class="sched-info">
-          <div class="sched-name">${s.title}</div>
-          <div class="sched-time"><i class="fas fa-clock" style="color:var(--purple3);font-size:9px;"></i> ${s.air_time || 'TBA'}</div>
-        </div>
-      </a>`).join('') : `<div class="sched-empty"><i class="fas fa-moon"></i><br>No episodes scheduled today</div>`}
+    <div class="sched-day${i === todayIdx ? ' active' : ''}" id="home-sched-${d}">
+      <div class="sched-grid">
+        ${schedByDay[d].length > 0 ? schedByDay[d].map((s: any) => `
+        <a href="/anime/${s.slug}" class="sched-card">
+          <div class="sched-poster-wrap">
+            <img src="${s.cover_image || ''}" alt="${s.title}" class="sched-poster" loading="lazy"
+                 onerror="this.src='https://placehold.co/150x225/111120/8b5cf6?text=?'">
+            <div class="sched-poster-overlay">
+              <div class="sched-poster-play"><i class="fas fa-play"></i></div>
+            </div>
+          </div>
+          <div class="sched-info">
+            <div class="sched-title">${s.title}</div>
+            <div class="sched-time"><i class="fas fa-clock"></i> ${s.air_time || 'TBA'}</div>
+            <span class="sched-badge">Ongoing</span>
+          </div>
+        </a>`).join('') : `
+        <div class="sched-empty" style="grid-column:1/-1;">
+          <i class="fas fa-moon"></i>
+          <strong>No releases today</strong>
+        </div>`}
+      </div>
     </div>`).join('')}
   </div>
 </section>
 <script>
-function switchDay(day, btn) {
-  document.querySelectorAll('.sched-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.sched-day').forEach(d => d.classList.remove('active'));
+window.switchDay = function(day, btn) {
+  document.querySelectorAll('#homeSchedTabs .sched-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[id^="home-sched-"]').forEach(d => d.classList.remove('active'));
   btn.classList.add('active');
-  var el = document.getElementById('sched-' + day);
+  var el = document.getElementById('home-sched-' + day);
   if (el) el.classList.add('active');
-}
+};
 </script>`
 
   const content = `
 ${heroSlider}
+
+${scheduleSection}
 
 ${ongoing.length > 0 ? `
 <section class="section">
@@ -226,8 +263,6 @@ ${trending.length > 0 ? `
     </div>
   </div>
 </section>` : ''}
-
-${scheduleSection}
 `
 
   return layout(`${siteName} — Free Anime Streaming Online`, content, '', siteName, siteUrl)

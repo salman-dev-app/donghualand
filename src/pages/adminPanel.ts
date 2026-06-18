@@ -752,34 +752,112 @@ export function adminPanelPage(section: string = 'dashboard') {
 
     <!-- ===== SCHEDULE ===== -->
     <div class="admin-page" id="admin-schedule">
-      <div class="admin-page-hd"><div class="admin-page-title">Schedule</div></div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r12);padding:18px;margin-bottom:20px;">
-        <div class="form-section-title">Add to Schedule</div>
+      <div class="admin-page-hd">
+        <div class="admin-page-title"><i class="fas fa-calendar-alt" style="color:var(--purple2);margin-right:8px;"></i>Schedule Manager</div>
+        <div style="display:flex;gap:8px;">
+          <button class="admin-btn admin-btn-outline" onclick="loadSchedulePage()"><i class="fas fa-sync-alt"></i> Refresh</button>
+          <a href="/schedule" target="_blank" class="admin-btn admin-btn-outline"><i class="fas fa-external-link-alt"></i> View Schedule</a>
+        </div>
+      </div>
+
+      <!-- Info banner -->
+      <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.22);border-radius:var(--r10);padding:12px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;">
+        <i class="fas fa-info-circle" style="color:var(--purple2);margin-top:1px;flex-shrink:0;"></i>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">
+          The schedule controls what appears in the <strong style="color:var(--text1);">Weekly Schedule</strong> section on the homepage and schedule page.
+          Each anime can be assigned a <strong style="color:var(--text1);">broadcast day</strong> and <strong style="color:var(--text1);">air time</strong>.
+          Episode-level air times can be set per-episode in the Episodes section.
+        </div>
+      </div>
+
+      <!-- Add / Edit Schedule Form -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r12);padding:20px;margin-bottom:20px;">
+        <div class="form-section-title" id="schedFormTitle"><i class="fas fa-plus-circle" style="color:var(--purple2);margin-right:7px;"></i>Add Anime to Schedule</div>
+        <input type="hidden" id="schedEditId" value="">
         <div class="admin-form-grid">
           <div class="admin-fg">
-            <label class="admin-lbl">Anime</label>
-            <select class="admin-sel" id="schedAnime" style="width:100%;"><option value="">-- Select Anime --</option></select>
-          </div>
-          <div class="admin-fg">
-            <label class="admin-lbl">Day of Week</label>
-            <select class="admin-sel" id="schedDay" style="width:100%;">
-              <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
-              <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+            <label class="admin-lbl">Anime <span style="color:var(--red);">*</span></label>
+            <select class="admin-sel" id="schedAnime" style="width:100%;">
+              <option value="">-- Select Anime --</option>
             </select>
           </div>
           <div class="admin-fg">
-            <label class="admin-lbl">Air Time</label>
-            <input type="time" class="admin-inp" id="schedTime">
+            <label class="admin-lbl">Day of Week <span style="color:var(--red);">*</span></label>
+            <select class="admin-sel" id="schedDay" style="width:100%;">
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </div>
+          <div class="admin-fg">
+            <label class="admin-lbl">Air Time <span style="color:var(--text3);font-weight:400;text-transform:none;">(HH:MM, 24h)</span></label>
+            <input type="time" class="admin-inp" id="schedTime" placeholder="e.g. 20:00">
+          </div>
+          <div class="admin-fg">
+            <label class="admin-lbl">Next Episode Number</label>
+            <input type="number" class="admin-inp" id="schedNextEp" placeholder="e.g. 13" min="1">
+          </div>
+          <div class="admin-fg full">
+            <label class="admin-lbl">Notes / Season Info <span style="color:var(--text3);font-weight:400;text-transform:none;">(optional)</span></label>
+            <input type="text" class="admin-inp" id="schedNotes" placeholder="e.g. Season 2 — airs every Friday at 20:00 CST">
           </div>
         </div>
-        <button class="admin-btn admin-btn-purple" onclick="addSchedule()"><i class="fas fa-plus"></i> Add to Schedule</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <button class="admin-btn admin-btn-purple" onclick="saveSchedule()" id="schedSaveBtn">
+            <i class="fas fa-plus"></i> Add to Schedule
+          </button>
+          <button class="admin-btn admin-btn-outline" onclick="resetSchedForm()" id="schedResetBtn">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
       </div>
-      <div class="admin-table-card">
+
+      <!-- Schedule by day tabs -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r12);overflow:hidden;margin-bottom:20px;">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:14px;font-weight:700;color:var(--text1);">Current Schedule</div>
+          <div style="display:flex;gap:7px;overflow-x:auto;" id="schedDayFilterTabs">
+            <button class="admin-btn admin-btn-purple" style="padding:5px 14px;font-size:11px;" onclick="filterSchedByDay('all',this)">All</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Monday',this)">Mon</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Tuesday',this)">Tue</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Wednesday',this)">Wed</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Thursday',this)">Thu</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Friday',this)">Fri</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Saturday',this)">Sat</button>
+            <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;" onclick="filterSchedByDay('Sunday',this)">Sun</button>
+          </div>
+        </div>
         <div style="overflow-x:auto;">
-          <table class="admin-tbl">
-            <thead><tr><th>Anime</th><th>Day</th><th>Time</th><th>Actions</th></tr></thead>
-            <tbody id="schedBody"><tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody>
+          <table class="admin-tbl" id="schedTable">
+            <thead>
+              <tr>
+                <th>Anime</th>
+                <th>Day</th>
+                <th>Air Time</th>
+                <th>Next EP</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="schedBody">
+              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text3);">
+                <i class="fas fa-spinner fa-spin"></i> Loading schedule...
+              </td></tr>
+            </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Quick-add via anime list -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r12);padding:20px;">
+        <div class="form-section-title"><i class="fas fa-bolt" style="color:var(--gold);margin-right:7px;"></i>Quick-Add Ongoing Anime to Schedule</div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Ongoing anime not yet in the schedule. Click to quickly add them.</p>
+        <div id="schedQuickAddList" style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="color:var(--text3);font-size:13px;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
         </div>
       </div>
     </div>

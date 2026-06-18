@@ -667,53 +667,263 @@ window.unbanUser = async function(id, name) {
 };
 
 // ====== SCHEDULE ======
+let allSchedData = [];
+let schedDayFilter = 'all';
+
 async function loadSchedulePage() {
-  await loadEpisodesPage(); // populate anime select
+  // Populate anime dropdown for schedule form
+  try {
+    const res = await fetch('/api/anime?limit=200&page=1', { headers: headers() });
+    const d = await res.json();
+    const sel = document.getElementById('schedAnime');
+    if (sel && d.data) {
+      const currentVal = sel.value;
+      sel.innerHTML = '<option value="">-- Select Anime --</option>' +
+        d.data.map(a => `<option value="${a.id}">${escHtml(a.title)}</option>`).join('');
+      if (currentVal) sel.value = currentVal;
+    }
+  } catch(e) { console.warn('Failed to load anime for schedule', e); }
+
   loadScheduleTable();
+  loadScheduleQuickAdd();
 }
 
 async function loadScheduleTable() {
   const tbody = document.getElementById('schedBody');
   if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
   try {
-    const res = await fetch('/api/schedule', { headers: headers() });
+    const res = await fetch('/api/admin/schedule', { headers: headers() });
     const d = await res.json();
-    if (d.data && d.data.length > 0) {
-      tbody.innerHTML = d.data.map(s => `
-        <tr>
-          <td style="font-weight:600;">${s.title}</td>
-          <td style="color:var(--purple2);">${s.day_of_week}</td>
-          <td style="color:var(--text3);">${s.air_time || '—'}</td>
-          <td><button class="tbl-btn tbl-del" onclick="removeSchedule('${s.id}')">Remove</button></td>
-        </tr>`).join('');
-    } else {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);">No schedule entries.</td></tr>';
-    }
-  } catch {}
+    allSchedData = d.data || [];
+    renderScheduleTable();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--red);padding:20px;text-align:center;">Error: ' + escHtml(e.message) + '</td></tr>';
+  }
 }
 
-window.addSchedule = async function() {
-  const animeId = getVal('schedAnime');
-  const day = getVal('schedDay');
-  if (!animeId || !day) { showToast('Select anime and day', 'error'); return; }
-  try {
-    const res = await fetch('/api/admin/schedule', {
-      method: 'POST', headers: headers(),
-      body: JSON.stringify({ anime_id: animeId, day_of_week: day, air_time: getVal('schedTime') })
-    });
-    const d = await res.json();
-    if (d.success) { showToast('Added to schedule', 'success'); loadScheduleTable(); }
-    else showToast(d.error || 'Error', 'error');
-  } catch { showToast('Error', 'error'); }
+function renderScheduleTable() {
+  const tbody = document.getElementById('schedBody');
+  if (!tbody) return;
+  const filtered = schedDayFilter === 'all'
+    ? allSchedData
+    : allSchedData.filter(s => s.day_of_week === schedDayFilter);
+
+  if (filtered.length === 0) {
+    const msg = schedDayFilter === 'all'
+      ? 'No schedule entries yet. Add anime above.'
+      : 'No entries for ' + schedDayFilter + '.';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text3);">' +
+      '<i class="fas fa-calendar-times" style="font-size:24px;display:block;margin-bottom:10px;color:var(--text4);"></i>' +
+      msg + '</td></tr>';
+    return;
+  }
+
+  // Sort by day order then air_time
+  const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  filtered.sort((a, b) => {
+    const da = dayOrder.indexOf(a.day_of_week);
+    const db = dayOrder.indexOf(b.day_of_week);
+    if (da !== db) return da - db;
+    if (!a.air_time) return 1;
+    if (!b.air_time) return -1;
+    return a.air_time.localeCompare(b.air_time);
+  });
+
+  tbody.innerHTML = filtered.map(s => `
+    <tr>
+      <td>
+        <div class="anime-cell-wrap">
+          <img src="${s.cover_image || ''}" class="cell-poster" onerror="this.style.display='none'" alt="">
+          <div>
+            <div class="cell-name">${escHtml(s.title || '')}</div>
+            <div class="cell-native" style="font-size:10px;color:var(--purple3);">ID: ${s.anime_id}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <span class="badge badge-purple" style="font-size:9px;">${s.day_of_week}</span>
+      </td>
+      <td style="color:var(--text2);font-weight:600;font-size:13px;">
+        ${s.air_time ? '<i class="fas fa-clock" style="color:var(--purple3);margin-right:5px;font-size:10px;"></i>' + s.air_time : '<span style="color:var(--text4);">—</span>'}
+      </td>
+      <td style="color:var(--text3);font-size:12px;">
+        ${s.next_episode ? 'EP ' + s.next_episode : '<span style="color:var(--text4);">—</span>'}
+      </td>
+      <td style="color:var(--text3);font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${s.notes ? escHtml(s.notes) : '<span style="color:var(--text4);">—</span>'}
+      </td>
+      <td>
+        <div class="tbl-act">
+          <button class="tbl-btn tbl-edit" onclick="editScheduleEntry(${s.id})"><i class="fas fa-edit"></i> Edit</button>
+          <button class="tbl-btn tbl-del" onclick="removeSchedule(${s.id})"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+window.filterSchedByDay = function(day, btn) {
+  schedDayFilter = day;
+  document.querySelectorAll('#schedDayFilterTabs .admin-btn').forEach(b => {
+    b.className = b.className.replace('admin-btn-purple', 'admin-btn-outline');
+  });
+  if (btn) {
+    btn.className = btn.className.replace('admin-btn-outline', 'admin-btn-purple');
+  }
+  renderScheduleTable();
 };
 
+window.editScheduleEntry = function(id) {
+  const entry = allSchedData.find(s => s.id === id);
+  if (!entry) return;
+  setVal('schedAnime', entry.anime_id);
+  setVal('schedDay', entry.day_of_week);
+  setVal('schedTime', entry.air_time || '');
+  setVal('schedNextEp', entry.next_episode || '');
+  setVal('schedNotes', entry.notes || '');
+  setVal('schedEditId', id);
+  const titleEl = document.getElementById('schedFormTitle');
+  if (titleEl) titleEl.innerHTML = '<i class="fas fa-edit" style="color:var(--gold);margin-right:7px;"></i>Edit Schedule Entry';
+  const saveBtn = document.getElementById('schedSaveBtn');
+  if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save"></i> Update Schedule';
+  // Scroll to form
+  const form = document.getElementById('admin-schedule');
+  if (form) form.querySelector('[style*="border-radius"]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.resetSchedForm = function() {
+  setVal('schedAnime', '');
+  setVal('schedDay', 'Monday');
+  setVal('schedTime', '');
+  setVal('schedNextEp', '');
+  setVal('schedNotes', '');
+  setVal('schedEditId', '');
+  const titleEl = document.getElementById('schedFormTitle');
+  if (titleEl) titleEl.innerHTML = '<i class="fas fa-plus-circle" style="color:var(--purple2);margin-right:7px;"></i>Add Anime to Schedule';
+  const saveBtn = document.getElementById('schedSaveBtn');
+  if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-plus"></i> Add to Schedule';
+};
+
+window.saveSchedule = async function() {
+  const animeId = getVal('schedAnime');
+  const day = getVal('schedDay');
+  const editId = getVal('schedEditId');
+  if (!animeId || !day) { showToast('Please select an anime and day', 'error'); return; }
+
+  const payload = {
+    anime_id: animeId,
+    day_of_week: day,
+    air_time: getVal('schedTime') || null,
+    next_episode: getVal('schedNextEp') ? parseInt(getVal('schedNextEp')) : null,
+    notes: getVal('schedNotes') || null
+  };
+
+  const saveBtn = document.getElementById('schedSaveBtn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+
+  try {
+    let res, d;
+    if (editId) {
+      // Update existing
+      res = await fetch('/api/admin/schedule/' + editId, {
+        method: 'PUT', headers: headers(),
+        body: JSON.stringify(payload)
+      });
+      d = await res.json();
+      if (d.success) {
+        showToast('Schedule updated!', 'success');
+        resetSchedForm();
+        loadScheduleTable();
+      } else {
+        showToast(d.error || 'Failed to update', 'error');
+      }
+    } else {
+      // Add new
+      res = await fetch('/api/admin/schedule', {
+        method: 'POST', headers: headers(),
+        body: JSON.stringify(payload)
+      });
+      d = await res.json();
+      if (d.success) {
+        showToast('Added to schedule!', 'success');
+        resetSchedForm();
+        loadScheduleTable();
+        loadScheduleQuickAdd();
+      } else {
+        showToast(d.error || 'Failed to add', 'error');
+      }
+    }
+  } catch(e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      const editId2 = getVal('schedEditId');
+      saveBtn.innerHTML = editId2
+        ? '<i class="fas fa-save"></i> Update Schedule'
+        : '<i class="fas fa-plus"></i> Add to Schedule';
+    }
+  }
+};
+
+// Keep old addSchedule as alias
+window.addSchedule = window.saveSchedule;
+
 window.removeSchedule = async function(id) {
-  if (!confirm('Remove from schedule?')) return;
+  if (!confirm('Remove this anime from the schedule?')) return;
   try {
     const res = await fetch('/api/admin/schedule/' + id, { method: 'DELETE', headers: headers() });
     const d = await res.json();
-    if (d.success) { showToast('Removed', 'success'); loadScheduleTable(); }
-  } catch {}
+    if (d.success) {
+      showToast('Removed from schedule', 'success');
+      loadScheduleTable();
+      loadScheduleQuickAdd();
+    } else {
+      showToast(d.error || 'Error', 'error');
+    }
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+};
+
+// Quick add — shows ongoing anime NOT in schedule
+async function loadScheduleQuickAdd() {
+  const container = document.getElementById('schedQuickAddList');
+  if (!container) return;
+  try {
+    // Get all anime and current schedule
+    const [animeRes, schedRes] = await Promise.all([
+      fetch('/api/anime?limit=200&status=Ongoing', { headers: headers() }),
+      fetch('/api/admin/schedule', { headers: headers() })
+    ]);
+    const [animeData, schedData] = await Promise.all([animeRes.json(), schedRes.json()]);
+    const scheduledIds = new Set((schedData.data || []).map(s => s.anime_id));
+    const unscheduled = (animeData.data || []).filter(a => !scheduledIds.has(a.id));
+    if (unscheduled.length === 0) {
+      container.innerHTML = '<span style="color:var(--green);font-size:12px;"><i class="fas fa-check-circle"></i> All ongoing anime are scheduled!</span>';
+      return;
+    }
+    container.innerHTML = unscheduled.slice(0, 20).map(a => `
+      <button class="admin-btn admin-btn-outline" style="padding:5px 12px;font-size:11px;gap:6px;"
+              onclick="quickAddToSchedule('${a.id}','${escHtml(a.title)}')">
+        <img src="${a.cover_image || ''}" style="width:18px;height:24px;object-fit:cover;border-radius:3px;flex-shrink:0;" onerror="this.style.display='none'" alt="">
+        ${escHtml(a.title)}
+      </button>`).join('');
+  } catch(e) {
+    container.innerHTML = '<span style="color:var(--text3);font-size:12px;">Unable to load</span>';
+  }
+}
+
+window.quickAddToSchedule = function(animeId, animeTitle) {
+  // Pre-fill form with this anime
+  setVal('schedAnime', animeId);
+  resetSchedForm();
+  setVal('schedAnime', animeId);
+  // Scroll to form and focus day selector
+  const form = document.getElementById('admin-schedule');
+  if (form) {
+    const firstCard = form.querySelector('.admin-form-grid');
+    if (firstCard) firstCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  showToast(animeTitle + ' selected — set the day & time', 'info');
 };
 
 // ====== SETTINGS ======
