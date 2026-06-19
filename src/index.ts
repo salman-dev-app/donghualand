@@ -229,6 +229,27 @@ app.get('/', async (c) => {
       GROUP BY a.id ORDER BY a.updated_at DESC LIMIT 12
     `).all()
 
+    const movies = await db.prepare(`
+      SELECT a.*, MAX(e.episode_number) as latest_ep
+      FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id
+      WHERE a.type = 'Movie'
+      GROUP BY a.id ORDER BY a.updated_at DESC LIMIT 12
+    `).all()
+
+    const completed = await db.prepare(`
+      SELECT a.*, MAX(e.episode_number) as latest_ep
+      FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id
+      WHERE a.status = 'Completed'
+      GROUP BY a.id ORDER BY a.updated_at DESC LIMIT 12
+    `).all()
+
+    const upcoming = await db.prepare(`
+      SELECT a.*, MAX(e.episode_number) as latest_ep
+      FROM anime a LEFT JOIN episodes e ON a.id = e.anime_id
+      WHERE a.status = 'Upcoming'
+      GROUP BY a.id ORDER BY a.updated_at DESC LIMIT 12
+    `).all()
+
     const schedule = await db.prepare(`
       SELECT s.*, a.title, a.cover_image, a.slug, a.status
       FROM schedule s JOIN anime a ON s.anime_id = a.id
@@ -243,6 +264,9 @@ app.get('/', async (c) => {
       recent: recent.results as any[],
       popular: popular.results as any[],
       ongoing: ongoing.results as any[],
+      movies: movies.results as any[],
+      completed: completed.results as any[],
+      upcoming: upcoming.results as any[],
       schedule: schedule.results as any[],
       siteName: settings.site_name,
       siteUrl: homeUrl.origin,
@@ -257,6 +281,9 @@ app.get('/', async (c) => {
       recent: [],
       popular: [],
       ongoing: [],
+      movies: [],
+      completed: [],
+      upcoming: [],
       schedule: [],
       siteName,
       siteUrl: homeUrl.origin,

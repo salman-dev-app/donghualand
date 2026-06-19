@@ -2697,3 +2697,186 @@ section.hero-slider + section.hero-slider { display: none !important; }
    ADMIN SCHEDULE TABLE — full width columns
 ================================================================ */
 .admin-fg.full { grid-column: 1 / -1; }
+
+/* ================================================================
+   POPULAR ANIME RANKED SECTION — Numbered list design (DonghuaPro style)
+================================================================ */
+.popular-ranked-section {}
+
+.popular-ranked-head {
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.popular-ranked-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text1);
+}
+
+.popular-pulse-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, var(--purple3), var(--accent2));
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.popular-ranked-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.pop-tab {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.pop-tab:hover {
+  color: var(--text1);
+  background: rgba(124,58,237,0.12);
+}
+
+.pop-tab.active {
+  background: linear-gradient(135deg, var(--purple3), var(--accent2));
+  color: #fff;
+}
+
+.popular-ranked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pop-ranked-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  text-decoration: none;
+  transition: background 0.18s;
+  border-radius: 8px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.pop-ranked-item:last-child {
+  border-bottom: none;
+}
+
+.pop-ranked-item:hover {
+  background: rgba(124,58,237,0.07);
+}
+
+.pop-rank {
+  font-size: 26px;
+  font-weight: 900;
+  min-width: 36px;
+  text-align: center;
+  line-height: 1;
+  font-style: italic;
+}
+
+.pop-rank-top { }
+.pop-rank-1 { color: var(--purple3); }
+.pop-rank-2 { color: var(--purple3); opacity: 0.85; }
+.pop-rank-3 { color: var(--purple3); opacity: 0.7; }
+.pop-rank-normal { color: var(--text4); font-size: 20px; font-style: normal; font-weight: 700; }
+
+.pop-thumb-wrap {
+  flex-shrink: 0;
+  width: 52px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg3);
+}
+
+.pop-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s;
+}
+
+.pop-ranked-item:hover .pop-thumb {
+  transform: scale(1.05);
+}
+
+.pop-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pop-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.pop-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pop-genre {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+}
+
+.pop-rating {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pop-rating i {
+  font-size: 9px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popular-ranked-title { font-size: 15px; }
+  .pop-rank { font-size: 22px; min-width: 28px; }
+  .pop-rank-normal { font-size: 17px; }
+  .pop-thumb-wrap { width: 44px; height: 62px; }
+  .pop-title { font-size: 13px; }
+  .pop-tab { font-size: 12px; padding: 4px 10px; }
+}
+
+@media (max-width: 480px) {
+  .popular-ranked-head { gap: 8px; }
+  .popular-ranked-tabs { gap: 2px; }
+  .pop-tab { padding: 4px 8px; font-size: 11px; }
+}
