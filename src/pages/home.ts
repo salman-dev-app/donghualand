@@ -7,11 +7,26 @@ export function homePage(data: {
   recent: any[]
   popular: any[]
   ongoing: any[]
+  movies: any[]
+  completed: any[]
+  upcoming: any[]
   schedule: any[]
   siteName?: string
   siteUrl?: string
 }) {
-  const { featured, trending, recent, popular, ongoing, schedule, siteName = 'ANIME WORLD', siteUrl = '' } = data
+  const {
+    featured,
+    trending,
+    recent,
+    popular,
+    ongoing,
+    movies,
+    completed,
+    upcoming,
+    schedule,
+    siteName = 'ANIME WORLD',
+    siteUrl = '',
+  } = data
 
   // Hero slider - use featured array (up to 5)
   const heroItems = featured.length > 0 ? featured.slice(0, 5) : []
@@ -198,7 +213,7 @@ export function homePage(data: {
       ${schedByDay[d].length > 0 ? `
       <div class="scroll-row wide">
         ${schedByDay[d].map((s: any) => `
-        <a href="${s.next_episode ? `/watch/${s.slug}-episode-${s.next_episode}` : `/anime/${s.slug}`}" class="acard">
+        <a href="/anime/${s.slug}" class="acard">
           <div class="acard-img">
             <img src="${s.cover_image || ''}" alt="${s.title}" loading="lazy"
                  onerror="this.src='https://placehold.co/150x220/111120/8b5cf6?text=?'">
@@ -247,10 +262,104 @@ export function homePage(data: {
 })();
 </script>`
 
+  // ──────────────────────────────────────────────────────────────────────
+  // POPULAR ANIME RANKED SECTION — shown after every content section
+  // Supports Weekly / Monthly / All time tabs
+  // ──────────────────────────────────────────────────────────────────────
+  function popularAnimeSection(sectionId: string, items: any[]): string {
+    if (items.length === 0) return ''
+    const topItems = items.slice(0, 10)
+    return `
+<section class="section popular-ranked-section" id="popularSection-${sectionId}">
+  <div class="container">
+    <div class="popular-ranked-wrap">
+      <div class="popular-ranked-header">
+        <div class="popular-ranked-title">
+          <i class="fas fa-chart-line" style="color:var(--purple3);font-size:18px;"></i>
+          Popular Anime
+        </div>
+        <div class="popular-ranked-tabs" id="popTabs-${sectionId}">
+          <button class="pop-tab active" data-period="weekly" onclick="switchPopTab('${sectionId}', 'weekly', this)">Weekly</button>
+          <button class="pop-tab" data-period="monthly" onclick="switchPopTab('${sectionId}', 'monthly', this)">Monthly</button>
+          <button class="pop-tab" data-period="all" onclick="switchPopTab('${sectionId}', 'all', this)">All</button>
+        </div>
+      </div>
+      <div class="popular-ranked-list" id="popList-${sectionId}">
+        ${topItems.map((a: any, idx: number) => {
+          const genres = genresFromJson(a.genres)
+          const rating = parseFloat(a.rating)
+          const img = a.cover_image || 'https://placehold.co/60x85/111120/8b5cf6?text=?'
+          return `
+        <a href="/anime/${a.slug}" class="pop-rank-item">
+          <div class="pop-rank-num${idx < 3 ? ' pop-rank-top' : ''}">${idx + 1}</div>
+          <div class="pop-rank-poster">
+            <img src="${img}" alt="${a.title}" loading="lazy"
+                 onerror="this.src='https://placehold.co/60x85/111120/8b5cf6?text=?'">
+          </div>
+          <div class="pop-rank-info">
+            <div class="pop-rank-name">${a.title}</div>
+            <div class="pop-rank-meta">
+              ${genres.slice(0, 1).join('') || a.type || 'ONA'}
+              ${!isNaN(rating) && rating > 0 ? `<span class="pop-rank-rating"><i class="fas fa-star"></i> ${rating.toFixed(1)}</span>` : ''}
+            </div>
+          </div>
+        </a>`
+        }).join('')}
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function() {
+  if (!window.__popTabData) window.__popTabData = {};
+  window.__popTabData['${sectionId}'] = ${JSON.stringify(topItems.map((a: any, idx: number) => ({
+    slug: a.slug,
+    title: a.title,
+    cover_image: a.cover_image || '',
+    genres: a.genres,
+    rating: a.rating,
+    type: a.type,
+    view_count: a.view_count || 0,
+  })))};
+
+  window.switchPopTab = window.switchPopTab || function(sectionId, period, btn) {
+    // Update active tab button
+    var tabs = document.querySelectorAll('#popTabs-' + sectionId + ' .pop-tab');
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    // For now all periods show the same data (sorted by view_count)
+    // In a real implementation you'd fetch period-specific data
+    var listEl = document.getElementById('popList-' + sectionId);
+    if (!listEl) return;
+    var items = (window.__popTabData && window.__popTabData[sectionId]) || [];
+    listEl.innerHTML = items.map(function(a, idx) {
+      var genres = [];
+      try {
+        var g = typeof a.genres === 'string' ? JSON.parse(a.genres) : a.genres;
+        if (Array.isArray(g)) genres = g.filter(Boolean);
+      } catch(e) {}
+      var rating = parseFloat(a.rating);
+      var img = a.cover_image || 'https://placehold.co/60x85/111120/8b5cf6?text=?';
+      var genreText = (genres[0] || a.type || 'ONA');
+      var ratingHtml = (!isNaN(rating) && rating > 0) ? '<span class="pop-rank-rating"><i class="fas fa-star"></i> ' + rating.toFixed(1) + '</span>' : '';
+      var topClass = idx < 3 ? ' pop-rank-top' : '';
+      return '<a href="/anime/' + a.slug + '" class="pop-rank-item">' +
+        '<div class="pop-rank-num' + topClass + '">' + (idx + 1) + '</div>' +
+        '<div class="pop-rank-poster"><img src="' + img + '" alt="' + a.title + '" loading="lazy" onerror="this.src=\'https://placehold.co/60x85/111120/8b5cf6?text=?\'"></div>' +
+        '<div class="pop-rank-info"><div class="pop-rank-name">' + a.title + '</div><div class="pop-rank-meta">' + genreText + ratingHtml + '</div></div>' +
+        '</a>';
+    }).join('');
+  };
+})();
+</script>`
+  }
+
   const content = `
 ${heroSlider}
 
 ${scheduleSection}
+
+${popularAnimeSection('schedule', popular)}
 
 ${ongoing.length > 0 ? `
 <section class="section">
@@ -265,6 +374,8 @@ ${ongoing.length > 0 ? `
   </div>
 </section>` : ''}
 
+${popularAnimeSection('ongoing', popular)}
+
 ${recent.length > 0 ? `
 <section class="section section-alt">
   <div class="container">
@@ -278,18 +389,52 @@ ${recent.length > 0 ? `
   </div>
 </section>` : ''}
 
-${popular.length > 0 ? `
+${popularAnimeSection('recent', popular)}
+
+${movies.length > 0 ? `
 <section class="section">
   <div class="container">
     <div class="sec-head">
-      <div class="sec-title"><i class="fas fa-star" style="color:var(--gold);margin-right:6px;"></i> Popular Anime</div>
-      <a href="/search" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+      <div class="sec-title"><i class="fas fa-film" style="color:var(--pink);margin-right:6px;"></i> Movies</div>
+      <a href="/search?type=Movie" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
     </div>
     <div class="scroll-row wide">
-      ${popular.map(a => animeCard(a)).join('')}
+      ${movies.map(a => animeCard(a)).join('')}
     </div>
   </div>
 </section>` : ''}
+
+${popularAnimeSection('movies', popular)}
+
+${completed.length > 0 ? `
+<section class="section section-alt">
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-title"><i class="fas fa-check-circle" style="color:var(--accent2);margin-right:6px;"></i> Completed</div>
+      <a href="/search?status=Completed" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="scroll-row wide">
+      ${completed.map(a => animeCard(a)).join('')}
+    </div>
+  </div>
+</section>` : ''}
+
+${popularAnimeSection('completed', popular)}
+
+${upcoming.length > 0 ? `
+<section class="section">
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-title"><i class="fas fa-rocket" style="color:var(--purple3);margin-right:6px;"></i> Upcoming</div>
+      <a href="/search?status=Upcoming" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="scroll-row wide">
+      ${upcoming.map(a => animeCard(a)).join('')}
+    </div>
+  </div>
+</section>` : ''}
+
+${popularAnimeSection('upcoming', popular)}
 
 ${trending.length > 0 ? `
 <section class="section section-alt">
@@ -303,6 +448,8 @@ ${trending.length > 0 ? `
     </div>
   </div>
 </section>` : ''}
+
+${popularAnimeSection('trending', popular)}
 `
 
   return layout(`${siteName} — Free Anime Streaming Online`, content, '', siteName, siteUrl)
