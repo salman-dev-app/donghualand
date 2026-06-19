@@ -390,6 +390,75 @@ function initFooterSocials() {
     .catch(() => {});
 }
 
+// ============ SMOOTH PAGE TRANSITIONS ============
+function initPageAnimations() {
+  // Animate elements when they enter viewport
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          entry.target.classList.add('anim-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.section').forEach(el => {
+      observer.observe(el);
+    });
+  }
+}
+
+// ============ CARD TOUCH FEEDBACK (Android style) ============
+function initCardTouchFeedback() {
+  const cards = document.querySelectorAll('.acard, .recent-item, .sched-card, .ep-card, .history-item');
+  cards.forEach(card => {
+    card.addEventListener('touchstart', () => {
+      card.style.transition = 'transform 0.1s ease, opacity 0.1s ease';
+      card.style.transform = 'scale(0.97)';
+      card.style.opacity = '0.85';
+    }, { passive: true });
+    card.addEventListener('touchend', () => {
+      card.style.transform = '';
+      card.style.opacity = '';
+      setTimeout(() => { card.style.transition = ''; }, 200);
+    }, { passive: true });
+    card.addEventListener('touchcancel', () => {
+      card.style.transform = '';
+      card.style.opacity = '';
+      setTimeout(() => { card.style.transition = ''; }, 200);
+    }, { passive: true });
+  });
+}
+
+// ============ FOOTER SETTINGS (site name etc.) ============
+function initSiteSettings() {
+  fetch('/api/site-settings')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.data) return;
+      const s = d.data;
+      // Site name updates
+      if (s.site_name) {
+        const els = document.querySelectorAll('#headerSiteName, #footerSiteName, #footerCopy');
+        els.forEach(el => {
+          if (el.id === 'footerCopy') {
+            el.textContent = `© ${new Date().getFullYear()} ${s.site_name}. All rights reserved.`;
+          } else {
+            el.textContent = s.site_name;
+          }
+        });
+      }
+      // Footer tagline
+      if (s.site_description) {
+        const tagline = document.getElementById('footerTagline');
+        if (tagline) tagline.textContent = s.site_description;
+      }
+    })
+    .catch(() => {});
+}
+
 // ============ INIT ============
 document.addEventListener('DOMContentLoaded', () => {
   checkAuth();
@@ -404,4 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initWatchlistBtn();
   initBroadcastBanner();
   initFooterSocials();
+  initPageAnimations();
+  initCardTouchFeedback();
+  initSiteSettings();
 });

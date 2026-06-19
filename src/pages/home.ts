@@ -1,5 +1,5 @@
 import { layout } from './layout'
-import { animeCard, genresFromJson, formatRating, recentItem } from './components'
+import { animeCard, genresFromJson, formatRating, recentEpCard } from './components'
 
 export function homePage(data: {
   featured: any[]
@@ -8,10 +8,13 @@ export function homePage(data: {
   popular: any[]
   ongoing: any[]
   schedule: any[]
+  movies?: any[]
+  completed?: any[]
+  upcoming?: any[]
   siteName?: string
   siteUrl?: string
 }) {
-  const { featured, trending, recent, popular, ongoing, schedule, siteName = 'ANIME WORLD', siteUrl = '' } = data
+  const { featured, trending, recent, popular, ongoing, schedule, movies = [], completed = [], upcoming = [], siteName = 'ANIME WORLD', siteUrl = '' } = data
 
   // Hero slider - use featured array (up to 5)
   const heroItems = featured.length > 0 ? featured.slice(0, 5) : []
@@ -40,7 +43,7 @@ export function homePage(data: {
       </div>` : ''}
       <div class="hero-meta-row">
         ${f.release_year ? `<span>${f.release_year}</span><span class="hmeta-dot"></span>` : ''}
-        <span>${genresFromJson(f.genres).slice(0, 3).join(' / ')}</span>
+        <span>${genresFromJson(f.genres).slice(0, 3).join(' · ')}</span>
       </div>
       <p class="hero-desc">${f.description || ''}</p>
       <div class="hero-btns">
@@ -63,7 +66,6 @@ export function homePage(data: {
 </section>
 <script>
 (function(){
-  // Guard: only one instance ever runs
   if (window.__heroSliderInit) return;
   window.__heroSliderInit = true;
 
@@ -79,32 +81,26 @@ export function homePage(data: {
   var timer = null;
 
   function go(n) {
-    // Remove active from current
     slides[cur].classList.remove('active');
     if (dots[cur]) dots[cur].classList.remove('active');
-    // Clamp next index
     cur = ((n % total) + total) % total;
-    // Activate next
     slides[cur].classList.add('active');
     if (dots[cur]) dots[cur].classList.add('active');
   }
 
   function resetTimer() {
     clearInterval(timer);
-    if (total > 1) timer = setInterval(function(){ go(cur + 1); }, 6000);
+    if (total > 1) timer = setInterval(function(){ go(cur + 1); }, 6500);
   }
 
-  // Expose for onclick attributes (arrows use these via button element listeners below)
   window.heroSlide = function(d) { go(cur + d); resetTimer(); };
   window.heroGoTo  = function(n) { go(n);       resetTimer(); };
 
-  // Wire up arrow buttons (event listeners, not onclick attributes)
   var prevBtn = document.getElementById('heroPrevBtn');
   var nextBtn = document.getElementById('heroNextBtn');
   if (prevBtn) prevBtn.addEventListener('click', function(){ go(cur - 1); resetTimer(); });
   if (nextBtn) nextBtn.addEventListener('click', function(){ go(cur + 1); resetTimer(); });
 
-  // Wire up dots via event delegation
   var dotsWrap = document.getElementById('heroDots');
   if (dotsWrap) {
     dotsWrap.addEventListener('click', function(e) {
@@ -115,69 +111,179 @@ export function homePage(data: {
     });
   }
 
-  // Start auto-play
+  // Touch/swipe support
+  var touchStartX = 0;
+  slider.addEventListener('touchstart', function(e){ touchStartX = e.touches[0].clientX; }, { passive: true });
+  slider.addEventListener('touchend', function(e){
+    var diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { go(diff > 0 ? cur + 1 : cur - 1); resetTimer(); }
+  }, { passive: true });
+
   resetTimer();
 })();
 </script>
 ` : `
-<section class="hero-slider" style="background: linear-gradient(135deg, #0a0a0f 0%, #13131e 50%, #1a1a2e 100%); min-height: 320px; display:flex; align-items:center; justify-content:center;">
-  <div style="text-align:center; padding:40px 20px;">
-    <i class="fas fa-dragon" style="font-size:60px; color:var(--purple); margin-bottom:20px; display:block;"></i>
-    <h1 style="font-size:32px; font-weight:900; margin-bottom:10px;">Welcome to ${siteName}</h1>
-    <p style="color:var(--text3); font-size:15px; margin-bottom:24px;">Stream the best Chinese anime online, free &amp; in HD.</p>
+<section class="hero-slider" style="background: linear-gradient(135deg, #080810 0%, #111120 50%, #1c1c32 100%); min-height: 360px; display:flex; align-items:center; justify-content:center;">
+  <div style="text-align:center; padding:48px 24px;">
+    <div style="width:72px;height:72px;background:linear-gradient(135deg,#7c3aed,#4f46e5);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 22px;box-shadow:0 8px 32px rgba(124,58,237,0.45);">
+      <i class="fas fa-dragon" style="font-size:32px; color:#fff;"></i>
+    </div>
+    <h1 style="font-size:36px; font-weight:900; margin-bottom:12px; background:linear-gradient(135deg,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Welcome to ${siteName}</h1>
+    <p style="color:var(--text3); font-size:15px; margin-bottom:28px; max-width:420px; margin-left:auto; margin-right:auto; line-height:1.7;">Stream the best Chinese anime (Donghua) online, completely free in HD quality.</p>
     <a href="/search" class="btn-watch" style="display:inline-flex;"><i class="fas fa-compass"></i> Browse Anime</a>
   </div>
 </section>`
 
-  // Schedule section
+  // ──────────────────────────────────────────────────────────────────────
+  // SCHEDULE SECTION — Date-aware, hides/shows by exact day tab click
+  // ──────────────────────────────────────────────────────────────────────
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   const schedByDay: Record<string, any[]> = {}
   days.forEach(d => { schedByDay[d] = [] })
   schedule.forEach(s => { if (schedByDay[s.day_of_week]) schedByDay[s.day_of_week].push(s) })
-  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
+
+  // JS getDay(): 0=Sun,1=Mon...6=Sat → our index: Mon=0...Sun=6
+  const todayJS = new Date().getDay()
+  const todayIdx = todayJS === 0 ? 6 : todayJS - 1
+  const todayName = days[todayIdx]
+
+  // Generate the actual calendar date for each day of the current week
+  const now = new Date()
+  const weekDates: { date: number; month: string; full: string }[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now)
+    d.setDate(now.getDate() + (i - todayIdx))
+    weekDates.push({
+      date: d.getDate(),
+      month: d.toLocaleDateString('en-US', { month: 'short' }),
+      full: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    })
+  }
+
+  // Sort each day by air_time
+  days.forEach(d => {
+    schedByDay[d].sort((a: any, b: any) => {
+      if (!a.air_time) return 1
+      if (!b.air_time) return -1
+      return a.air_time.localeCompare(b.air_time)
+    })
+  })
 
   const scheduleSection = `
-<section class="section section-alt">
+<section class="section section-alt home-schedule-section">
   <div class="container">
     <div class="sec-head">
-      <div class="sec-title"><i class="fas fa-calendar-alt" style="color:var(--purple);"></i> Weekly Schedule</div>
-      <a href="/schedule" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+      <div class="sec-title"><i class="fas fa-calendar-alt" style="color:var(--purple3);margin-right:6px;"></i> Weekly Schedule</div>
+      <a href="/schedule" class="sec-more">Full Schedule <i class="fas fa-chevron-right"></i></a>
     </div>
-    <p class="sched-note">New episodes available approximately 20–60 minutes after official broadcast time.</p>
-    <div class="sched-tabs" id="schedTabs">
-      ${days.map((d, i) => `<button class="sched-tab${i === todayIdx ? ' active' : ''}" onclick="switchDay('${d}', this)">${d.slice(0,3)}</button>`).join('')}
+    <p class="sched-note">
+      <i class="fas fa-satellite-dish" style="margin-right:5px;color:var(--purple3);"></i>
+      New episodes available approximately 20–60 minutes after official broadcast time.
+    </p>
+
+    <!-- Day tabs with dates -->
+    <div class="home-sched-tabs" id="homeSchedTabs">
+      ${days.map((d, i) => `
+      <button class="home-sched-tab${i === todayIdx ? ' active' : ''}" data-day="${d}" onclick="homeSwitchDay('${d}', this)">
+        <span class="hstab-day">${d.slice(0, 3)}</span>
+        <span class="hstab-date">${weekDates[i].date}</span>
+        ${i === todayIdx ? '<span class="hstab-today-dot"></span>' : ''}
+      </button>`).join('')}
     </div>
+
+    <!-- Day content panels — only active one is visible -->
     ${days.map((d, i) => `
-    <div class="sched-day${i === todayIdx ? ' active' : ''}" id="sched-${d}">
-      ${schedByDay[d].length > 0 ? schedByDay[d].map(s => `
-      <a href="/anime/${s.slug}" class="sched-card">
-        <img src="${s.cover_image || ''}" alt="${s.title}" class="sched-poster" loading="lazy" onerror="this.src='https://placehold.co/130x190/0f0f17/6c5ce7?text=?'">
-        <div class="sched-info">
-          <div class="sched-name">${s.title}</div>
-          <div class="sched-time"><i class="fas fa-clock" style="color:var(--purple2);font-size:9px;"></i> ${s.air_time || 'TBA'}</div>
-        </div>
-      </a>`).join('') : `<div class="sched-empty"><i class="fas fa-moon"></i> No shows this day</div>`}
+    <div class="home-sched-panel${i === todayIdx ? ' active' : ''}" id="home-sched-${d}">
+      <div class="sched-day-header">
+        <span class="sched-day-label"><i class="fas fa-calendar-day"></i> ${d} — ${weekDates[i].full}</span>
+        ${i === todayIdx ? '<span class="sched-today-badge"><i class="fas fa-circle" style="font-size:6px;margin-right:4px;"></i>Today</span>' : ''}
+      </div>
+      ${schedByDay[d].length > 0 ? `
+      <div class="scroll-row wide">
+        ${schedByDay[d].map((s: any) => `
+        <a href="/anime/${s.slug}" class="acard">
+          <div class="acard-img">
+            <img src="${s.cover_image || ''}" alt="${s.title}" loading="lazy"
+                 onerror="this.src='https://placehold.co/150x220/111120/8b5cf6?text=?'">
+            <div class="acard-overlay">
+              <div class="acard-play"><i class="fas fa-info-circle"></i></div>
+            </div>
+            ${s.next_episode ? `<div class="acard-ep">EP ${s.next_episode}</div>` : ''}
+            <div class="acard-time-badge"><i class="fas fa-clock"></i> ${s.air_time || 'TBA'}</div>
+            <div class="acard-status"></div>
+          </div>
+          <div class="acard-body">
+            <div class="acard-name">${s.title}</div>
+            <div class="acard-meta">
+              ${s.next_episode ? `<span style="color:var(--accent2);font-weight:700;">EP ${s.next_episode} upcoming</span>` : '<span style="color:var(--green);">Ongoing</span>'}
+            </div>
+          </div>
+        </a>`).join('')}
+      </div>` : `
+      <div class="home-sched-empty">
+        <i class="fas fa-moon"></i>
+        <strong>No releases on ${d}</strong>
+        <span>Check back later</span>
+      </div>`}
     </div>`).join('')}
   </div>
 </section>
 <script>
-function switchDay(day, btn) {
-  document.querySelectorAll('.sched-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.sched-day').forEach(d => d.classList.remove('active'));
-  btn.classList.add('active');
-  const el = document.getElementById('sched-' + day);
-  if (el) el.classList.add('active');
-}
+(function() {
+  window.homeSwitchDay = function(day, btn) {
+    // Hide ALL day panels first
+    var panels = document.querySelectorAll('.home-sched-panel');
+    for (var i = 0; i < panels.length; i++) {
+      panels[i].classList.remove('active');
+    }
+    // Remove active from ALL tabs
+    var tabs = document.querySelectorAll('#homeSchedTabs .home-sched-tab');
+    for (var j = 0; j < tabs.length; j++) {
+      tabs[j].classList.remove('active');
+    }
+    // Show selected day panel
+    var panel = document.getElementById('home-sched-' + day);
+    if (panel) panel.classList.add('active');
+    // Activate clicked tab
+    if (btn) btn.classList.add('active');
+  };
+})();
 </script>`
+
+  // ── Trending ranked list card (matches reference screenshot design) ──
+  function trendingRankCard(a: any, rank: number): string {
+    const genres = genresFromJson(a.genres)
+    const rating = parseFloat(a.rating)
+    const img = a.cover_image || 'https://placehold.co/100x150/111120/8b5cf6?text=?'
+    // Rank number gradient class
+    const rankClass = rank <= 3 ? 'tr-rank-top' : rank <= 5 ? 'tr-rank-mid' : 'tr-rank-low'
+    return `
+<a href="/anime/${a.slug}" class="tr-card">
+  <div class="tr-rank ${rankClass}">${rank}</div>
+  <div class="tr-poster">
+    <img src="${img}" alt="${a.title}" loading="lazy"
+         onerror="this.src='https://placehold.co/100x150/111120/8b5cf6?text=?'">
+  </div>
+  <div class="tr-info">
+    <div class="tr-title">${a.title}</div>
+    <div class="tr-meta">
+      <span class="tr-genre">${genres.slice(0, 1).join('') || a.type || 'Action'}</span>
+      ${!isNaN(rating) ? `<span class="tr-sep">·</span><span class="tr-rating"><i class="fas fa-star" style="color:var(--gold);font-size:10px;"></i> ${rating.toFixed(1)}</span>` : ''}
+    </div>
+  </div>
+</a>`
+  }
 
   const content = `
 ${heroSlider}
 
+${scheduleSection}
+
 ${ongoing.length > 0 ? `
-<section class="section">
+<section class="section home-section-ongoing">
   <div class="container">
     <div class="sec-head">
-      <div class="sec-title"><i class="fas fa-fire" style="color:var(--purple);"></i> Ongoing Anime</div>
+      <div class="sec-title"><i class="fas fa-fire" style="color:#f59e0b;margin-right:6px;"></i> Ongoing Anime</div>
       <a href="/search?status=Ongoing" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
     </div>
     <div class="scroll-row wide">
@@ -187,46 +293,70 @@ ${ongoing.length > 0 ? `
 </section>` : ''}
 
 ${recent.length > 0 ? `
-<section class="section section-alt">
+<section class="section section-alt home-section-recent">
   <div class="container">
     <div class="sec-head">
-      <div class="sec-title"><i class="fas fa-clock" style="color:var(--purple);"></i> Recently Updated</div>
+      <div class="sec-title"><i class="fas fa-clock" style="color:var(--accent2);margin-right:6px;"></i> Recently Updated</div>
       <a href="/search" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
     </div>
-    <div class="recent-grid">
-      ${recent.slice(0, 10).map(a => recentItem(a)).join('')}
+    <div class="scroll-row wide">
+      ${recent.slice(0, 12).map(a => recentEpCard(a)).join('')}
     </div>
   </div>
 </section>` : ''}
 
-${popular.length > 0 ? `
-<section class="section">
+${movies.length > 0 ? `
+<section class="section home-section-movies">
   <div class="container">
     <div class="sec-head">
-      <div class="sec-title"><i class="fas fa-star" style="color:var(--purple);"></i> Popular Anime</div>
-      <a href="/search" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+      <div class="sec-title"><i class="fas fa-film" style="color:#a78bfa;margin-right:6px;"></i> Movies</div>
+      <a href="/search?type=Movie" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
     </div>
-    <div class="grid-5">
-      ${popular.slice(0, 10).map(a => animeCard(a)).join('')}
+    <div class="scroll-row wide">
+      ${movies.map(a => animeCard(a)).join('')}
+    </div>
+  </div>
+</section>` : ''}
+
+${completed.length > 0 ? `
+<section class="section section-alt home-section-completed">
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-title"><i class="fas fa-check-circle" style="color:var(--blue);margin-right:6px;"></i> Completed</div>
+      <a href="/search?status=Completed" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="scroll-row wide">
+      ${completed.map(a => animeCard(a)).join('')}
+    </div>
+  </div>
+</section>` : ''}
+
+${upcoming.length > 0 ? `
+<section class="section home-section-upcoming">
+  <div class="container">
+    <div class="sec-head">
+      <div class="sec-title"><i class="fas fa-rocket" style="color:var(--pink);margin-right:6px;"></i> Upcoming</div>
+      <a href="/search?status=Upcoming" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
+    </div>
+    <div class="scroll-row wide">
+      ${upcoming.map(a => animeCard(a)).join('')}
     </div>
   </div>
 </section>` : ''}
 
 ${trending.length > 0 ? `
-<section class="section section-alt">
+<section class="section section-alt home-section-trending">
   <div class="container">
     <div class="sec-head">
-      <div class="sec-title"><i class="fas fa-chart-line" style="color:var(--purple);"></i> Trending Now</div>
+      <div class="sec-title"><i class="fas fa-chart-line" style="color:var(--pink);margin-right:6px;"></i> Trending Anime</div>
       <a href="/search" class="sec-more">View All <i class="fas fa-chevron-right"></i></a>
     </div>
-    <div class="scroll-row">
-      ${trending.map(a => animeCard(a)).join('')}
+    <div class="trending-ranked-list">
+      ${trending.slice(0, 10).map((a, i) => trendingRankCard(a, i + 1)).join('')}
     </div>
   </div>
 </section>` : ''}
-
-${scheduleSection}
 `
 
-  return layout(`${siteName} - Free Anime Streaming Online`, content, '', siteName, siteUrl)
+  return layout(`${siteName} — Free Anime Streaming Online`, content, '', siteName, siteUrl)
 }

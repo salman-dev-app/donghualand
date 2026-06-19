@@ -1,4 +1,4 @@
-// Layout template
+// Layout template — Premium Redesign v2.0
 
 export function layout(title: string, content: string, extraHead: string = '', siteName: string = 'ANIME WORLD', siteUrl: string = ''): string {
   const siteDesc = 'Stream anime online for free in HD — new episodes daily, no subscription needed. Watch your favorite anime anytime, anywhere.'
@@ -24,6 +24,10 @@ ${siteUrl ? `<meta property="og:url" content="${siteUrl}">` : ''}
 <meta name="twitter:title" content="${title}">
 <meta name="twitter:description" content="${siteDesc}">
 <meta name="twitter:image" content="${ogImage}">
+<!-- Theme color for Android/iOS -->
+<meta name="theme-color" content="#080810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,56 +60,56 @@ ${extraHead}
 
     <!-- Desktop navigation -->
     <nav class="header-nav">
-      <a href="/" class="nav-link">Home</a>
+      <a href="/" class="nav-link"><i class="fas fa-home" style="font-size:12px;"></i> Home</a>
       <div class="nav-dropdown">
-        <a class="nav-link">Browse <i class="fas fa-chevron-down" style="font-size:9px;"></i></a>
+        <a class="nav-link" style="cursor:pointer;">Browse <i class="fas fa-chevron-down" style="font-size:9px;"></i></a>
         <div class="nav-dropdown-menu">
           <a href="/search?status=Ongoing" class="nav-drop-item"><i class="fas fa-circle" style="color:var(--green);font-size:8px;"></i> Ongoing</a>
           <a href="/search?status=Completed" class="nav-drop-item"><i class="fas fa-check-circle"></i> Completed</a>
-          <a href="/search?type=ONA" class="nav-drop-item"><i class="fas fa-video"></i> ONA</a>
+          <a href="/search?type=ONA" class="nav-drop-item"><i class="fas fa-video"></i> ONA Series</a>
           <a href="/search?type=Movie" class="nav-drop-item"><i class="fas fa-film"></i> Movies</a>
           <div class="nav-divider"></div>
-          <a href="/search?genre=Action" class="nav-drop-item">Action</a>
-          <a href="/search?genre=Fantasy" class="nav-drop-item">Fantasy</a>
-          <a href="/search?genre=Adventure" class="nav-drop-item">Adventure</a>
-          <a href="/search?genre=Historical" class="nav-drop-item">Historical</a>
-          <a href="/search?genre=Martial+Arts" class="nav-drop-item">Martial Arts</a>
-          <a href="/search?genre=Romance" class="nav-drop-item">Romance</a>
+          <a href="/search?genre=Action" class="nav-drop-item"><i class="fas fa-bolt"></i> Action</a>
+          <a href="/search?genre=Fantasy" class="nav-drop-item"><i class="fas fa-hat-wizard"></i> Fantasy</a>
+          <a href="/search?genre=Adventure" class="nav-drop-item"><i class="fas fa-map-marked-alt"></i> Adventure</a>
+          <a href="/search?genre=Historical" class="nav-drop-item"><i class="fas fa-landmark"></i> Historical</a>
+          <a href="/search?genre=Martial+Arts" class="nav-drop-item"><i class="fas fa-fist-raised"></i> Martial Arts</a>
+          <a href="/search?genre=Romance" class="nav-drop-item"><i class="fas fa-heart"></i> Romance</a>
         </div>
       </div>
-      <a href="/schedule" class="nav-link">Schedule</a>
+      <a href="/schedule" class="nav-link"><i class="fas fa-calendar-alt" style="font-size:12px;"></i> Schedule</a>
     </nav>
 
     <!-- Header right actions -->
     <div class="header-right">
-      <!-- Desktop search toggle icon (shown on desktop, triggers search box) -->
+      <!-- Desktop search toggle icon -->
       <button class="desktop-search-btn" id="desktopSearchBtn" onclick="toggleDesktopSearch()" title="Search">
         <i class="fas fa-search"></i>
       </button>
 
-      <!-- Desktop: Sign In / Join buttons (hidden when logged in) -->
+      <!-- Desktop: Sign In / Join buttons -->
       <a href="/user/login" class="btn-signin" id="headerSignIn">Sign In</a>
       <a href="/user/register" class="btn-join" id="headerJoin">Join Free</a>
 
-      <!-- Mobile: Search Icon Button → opens search overlay -->
+      <!-- Mobile: Search Icon Button -->
       <button class="mob-search-btn" id="mobSearchBtn" onclick="toggleSearchOverlay()" title="Search">
         <i class="fas fa-search"></i>
       </button>
 
       <!-- Mobile: Login/Register Icon (shown when logged out) -->
       <a href="/user/login" class="mob-auth-btn" id="mobAuthBtn" title="Sign In">
-        <i class="fas fa-sign-in-alt"></i>
+        <i class="fas fa-user"></i>
       </a>
 
-      <!-- User menu (shown when logged in - both desktop and mobile) -->
+      <!-- User menu (shown when logged in) -->
       <div class="user-wrap hidden" id="userMenuWrap">
         <button class="user-btn" id="userMenuBtn">
           <img src="" alt="" class="user-ava" id="userAva">
           <span id="userNameLabel" class="user-name-label"></span>
-          <i class="fas fa-chevron-down" style="font-size:10px; color:var(--text3);"></i>
+          <i class="fas fa-chevron-down" style="font-size:9px; color:var(--text3);"></i>
         </button>
         <div class="user-drop" id="userDrop">
-          <a href="/user/profile" class="user-drop-item"><i class="fas fa-user"></i> Profile</a>
+          <a href="/user/profile" class="user-drop-item"><i class="fas fa-user-circle"></i> Profile</a>
           <a href="/user/watchlist" class="user-drop-item"><i class="fas fa-bookmark"></i> Watchlist</a>
           <a href="/user/history" class="user-drop-item"><i class="fas fa-history"></i> History</a>
           <div class="drop-divider"></div>
@@ -123,20 +127,20 @@ ${extraHead}
   </div>
 </header>
 
-<!-- ==================== SEARCH OVERLAY (used by header btn + bottom nav) ==================== -->
+<!-- ==================== SEARCH OVERLAY ==================== -->
 <div class="search-overlay" id="searchOverlay" onclick="handleSearchOverlayClick(event)">
   <div class="search-overlay-box">
     <div class="search-overlay-header">
       <i class="fas fa-search search-overlay-icon"></i>
       <input type="text" id="overlaySearchInput" class="search-overlay-input"
-             placeholder="Search anime title..." autocomplete="off" autofocus>
+             placeholder="Search anime, movies, series..." autocomplete="off" autofocus>
       <button class="search-overlay-close" onclick="closeSearchOverlay()" title="Close">
         <i class="fas fa-times"></i>
       </button>
     </div>
     <div class="search-overlay-drop" id="searchOverlayDrop"></div>
     <div class="search-overlay-footer">
-      <span>Press <kbd>Enter</kbd> to search all results · <kbd>Esc</kbd> to close</span>
+      <span>Press <kbd>Enter</kbd> to see all results &nbsp;·&nbsp; <kbd>Esc</kbd> to close</span>
     </div>
   </div>
 </div>
@@ -152,21 +156,25 @@ ${extraHead}
     </div>
     <div class="mob-sep"></div>
     <a href="/" class="mob-nav-link"><i class="fas fa-home"></i> Home</a>
-    <a href="/search" class="mob-nav-link"><i class="fas fa-compass"></i> Browse</a>
+    <a href="/search" class="mob-nav-link"><i class="fas fa-compass"></i> Browse Anime</a>
     <a href="/search?status=Ongoing" class="mob-nav-link"><i class="fas fa-fire"></i> Ongoing</a>
     <a href="/search?status=Completed" class="mob-nav-link"><i class="fas fa-check-circle"></i> Completed</a>
+    <a href="/search?type=Movie" class="mob-nav-link"><i class="fas fa-film"></i> Movies</a>
     <a href="/schedule" class="mob-nav-link"><i class="fas fa-calendar-alt"></i> Schedule</a>
     <div class="mob-sep"></div>
+    <div style="padding: 8px 16px 6px; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text4); font-weight:700;">Genres</div>
     <a href="/search?genre=Action" class="mob-nav-link"><i class="fas fa-bolt"></i> Action</a>
     <a href="/search?genre=Fantasy" class="mob-nav-link"><i class="fas fa-hat-wizard"></i> Fantasy</a>
     <a href="/search?genre=Adventure" class="mob-nav-link"><i class="fas fa-map-marked-alt"></i> Adventure</a>
     <a href="/search?genre=Martial+Arts" class="mob-nav-link"><i class="fas fa-fist-raised"></i> Martial Arts</a>
+    <a href="/search?genre=Historical" class="mob-nav-link"><i class="fas fa-landmark"></i> Historical</a>
+    <a href="/search?genre=Romance" class="mob-nav-link"><i class="fas fa-heart"></i> Romance</a>
   </div>
 </div>
 
 <!-- ==================== MAIN CONTENT ==================== -->
 <main class="site-main">
-<!-- ==================== BROADCAST BANNER ==================== -->
+<!-- Broadcast Banner -->
 <div id="broadcastBanner" style="display:none;"></div>
 ${content}
 </main>
@@ -180,7 +188,7 @@ ${content}
           <div class="fli"><i class="fas fa-dragon"></i></div>
           <span id="footerSiteName">${siteName}</span>
         </a>
-        <p class="footer-tagline" id="footerTagline">Your world of anime, unlocked.</p>
+        <p class="footer-tagline" id="footerTagline">Your ultimate destination for anime streaming.<br>Free, HD, updated daily.</p>
         <div class="footer-social" id="footerSocial">
           <!-- Populated dynamically from DB settings -->
         </div>
@@ -188,9 +196,10 @@ ${content}
       <div class="footer-links">
         <div class="footer-col">
           <h4>Browse</h4>
-          <a href="/search?status=Ongoing">Ongoing</a>
+          <a href="/search?status=Ongoing"><i class="fas fa-circle" style="font-size:7px; color:var(--green); margin-right:5px;"></i>Ongoing</a>
           <a href="/search?status=Completed">Completed</a>
           <a href="/search?type=Movie">Movies</a>
+          <a href="/search?type=ONA">ONA Series</a>
           <a href="/schedule">Schedule</a>
         </div>
         <div class="footer-col">
@@ -200,27 +209,29 @@ ${content}
           <a href="/search?genre=Adventure">Adventure</a>
           <a href="/search?genre=Historical">Historical</a>
           <a href="/search?genre=Martial+Arts">Martial Arts</a>
+          <a href="/search?genre=Romance">Romance</a>
         </div>
         <div class="footer-col">
           <h4>Account</h4>
           <a href="/user/register">Register</a>
           <a href="/user/login">Sign In</a>
           <a href="/user/watchlist">Watchlist</a>
-          <a href="/user/membership">Membership</a>
+          <a href="/user/history">History</a>
+          <a href="/user/profile">Profile</a>
         </div>
         <div class="footer-col">
-          <h4>Support</h4>
-          <a href="/about">About</a>
+          <h4>Info</h4>
+          <a href="/about">About Us</a>
           <a href="/contact">Contact</a>
           <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms</a>
+          <a href="/terms">Terms of Use</a>
           <a href="/dmca">DMCA</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
       <p id="footerCopy">© 2026 ${siteName}. All rights reserved.</p>
-      <p>This site only provides web page services and does not store any content.</p>
+      <p>This site only provides web page services and does not store any content on its servers.</p>
     </div>
   </div>
 </footer>

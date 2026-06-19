@@ -30,13 +30,13 @@ export function animeCard(a: any): string {
   const genres = genresFromJson(a.genres)
   const statusClass = statusBadge(a.status)
   const barClass = statusBarClass(a.status)
-  const img = a.cover_image || 'https://placehold.co/150x220/0f0f17/6c5ce7?text=No+Image'
+  const img = a.cover_image || 'https://placehold.co/150x220/111120/8b5cf6?text=No+Image'
   const ep = a.latest_ep || a.total_episodes || ''
   const rating = parseFloat(a.rating)
   return `
 <a href="/anime/${a.slug}" class="acard">
   <div class="acard-img">
-    <img src="${img}" alt="${a.title}" loading="lazy" onerror="this.src='https://placehold.co/150x220/0f0f17/6c5ce7?text=?'">
+    <img src="${img}" alt="${a.title}" loading="lazy" onerror="this.src='https://placehold.co/150x220/111120/8b5cf6?text=?'">
     <div class="acard-overlay">
       <div class="acard-play"><i class="fas fa-play"></i></div>
     </div>
@@ -58,11 +58,11 @@ export function animeCard(a: any): string {
 
 export function episodeCard(ep: any, slug: string, animeCover?: string): string {
   // Always use the anime cover image as thumbnail — no manual upload needed
-  const thumb = animeCover || 'https://placehold.co/320x180/0f0f17/6c5ce7?text=EP+' + ep.episode_number
+  const thumb = animeCover || 'https://placehold.co/320x180/111120/8b5cf6?text=EP+' + ep.episode_number
   return `
 <a href="/watch/${slug}-episode-${ep.episode_number}" class="ep-card">
   <div class="ep-thumb">
-    <img src="${thumb}" alt="Episode ${ep.episode_number}" loading="lazy" onerror="this.src='https://placehold.co/320x180/0f0f17/6c5ce7?text=EP+${ep.episode_number}'">
+    <img src="${thumb}" alt="Episode ${ep.episode_number}" loading="lazy" onerror="this.src='https://placehold.co/320x180/111120/8b5cf6?text=EP+${ep.episode_number}'">
     <div class="ep-thumb-overlay">
       <i class="fas fa-play" style="font-size:20px; color:#fff;"></i>
     </div>
@@ -88,14 +88,14 @@ export function breadcrumb(items: { label: string, href?: string }[]): string {
 
 export function recentItem(a: any): string {
   const genres = genresFromJson(a.genres)
-  const img = a.cover_image || 'https://placehold.co/50x70/0f0f17/6c5ce7?text=?'
+  const img = a.cover_image || 'https://placehold.co/50x70/111120/8b5cf6?text=?'
   const statusTag = (a.status || 'ONA').toLowerCase() === 'ongoing' ? 'rtag-on' :
     (a.status || '').toLowerCase() === 'completed' ? 'rtag-done' : 'rtag-up'
   const typeTag = 'rtag-ona'
   const href = a.latest_ep ? `/watch/${a.slug}-episode-${a.latest_ep}` : `/anime/${a.slug}`
   return `
 <a href="${href}" class="recent-item">
-  <img src="${img}" alt="${a.title}" class="recent-thumb" loading="lazy" onerror="this.src='https://placehold.co/50x70/0f0f17/6c5ce7?text=?'">
+  <img src="${img}" alt="${a.title}" class="recent-thumb" loading="lazy" onerror="this.src='https://placehold.co/50x70/111120/8b5cf6?text=?'">
   <div class="recent-info">
     <div class="recent-name">${a.title}</div>
     <div class="recent-tags">
@@ -104,6 +104,38 @@ export function recentItem(a: any): string {
     </div>
     ${a.latest_ep ? `<div class="recent-ep"><i class="fas fa-play-circle" style="font-size:9px;"></i> EP ${a.latest_ep}</div>` : ''}
     <div class="recent-genre">${genres.slice(0, 2).join(' · ')}</div>
+  </div>
+</a>`
+}
+
+// Recently Updated card — uses same anime-card style as Ongoing section but with EP badge highlighted
+export function recentEpCard(a: any): string {
+  const img = a.cover_image || 'https://placehold.co/150x220/111120/8b5cf6?text=No+Image'
+  const ep = a.latest_ep || a.total_eps || ''
+  const rating = parseFloat(a.rating)
+  const href = ep ? `/watch/${a.slug}-episode-${ep}` : `/anime/${a.slug}`
+  const genres = genresFromJson(a.genres)
+  const barClass = (a.status || '').toLowerCase() === 'completed' ? 'done' : ''
+  return `
+<a href="${href}" class="acard">
+  <div class="acard-img">
+    <img src="${img}" alt="${a.title}" loading="lazy" onerror="this.src='https://placehold.co/150x220/111120/8b5cf6?text=?'">
+    <div class="acard-overlay">
+      <div class="acard-play"><i class="fas fa-play"></i></div>
+    </div>
+    ${a.type ? `<div class="acard-type">${a.type}</div>` : ''}
+    ${ep ? `<div class="acard-ep acard-ep-new">EP ${ep}</div>` : ''}
+    ${!isNaN(rating) ? `<div class="acard-score"><i class="fas fa-star" style="color:var(--gold);font-size:8px;"></i>${rating.toFixed(1)}</div>` : ''}
+    <div class="acard-status ${barClass}"></div>
+    <div class="acard-new-badge"><i class="fas fa-bolt"></i> NEW</div>
+  </div>
+  <div class="acard-body">
+    <div class="acard-name">${a.title}</div>
+    <div class="acard-meta">
+      <span>${a.release_year || ''}</span>
+      ${a.release_year && genres.length ? '<span class="acard-meta-dot"></span>' : ''}
+      <span>${genres.slice(0, 1).join('')}</span>
+    </div>
   </div>
 </a>`
 }
