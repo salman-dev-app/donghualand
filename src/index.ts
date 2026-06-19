@@ -10,6 +10,7 @@ import { userRoutes } from './routes/users'
 import { adminRoutes } from './routes/admin'
 import { searchRoutes } from './routes/search'
 import { tmdbRoutes } from './routes/tmdb'
+import { jikanRoutes } from './routes/jikan'
 import { commentRoutes } from './routes/comments'
 import { uploadRoutes } from './routes/upload'
 
@@ -148,6 +149,7 @@ app.route('/api/users', userRoutes)
 app.route('/api/admin', adminRoutes)
 app.route('/api/search', searchRoutes)
 app.route('/api/tmdb', tmdbRoutes)
+app.route('/api/jikan', jikanRoutes)
 app.route('/api/comments', commentRoutes)
 app.route('/api/upload', uploadRoutes)
 

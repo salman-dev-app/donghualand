@@ -444,6 +444,11 @@ export function adminPanelPage(section: string = 'dashboard') {
 .tmdb-r img { width:100%; aspect-ratio:2/3; object-fit:cover; }
 .tmdb-r-name { padding:5px 7px; font-size:11px; font-weight:600; color:var(--text1); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .tmdb-r-year { padding:0 7px 6px; font-size:10px; color:var(--text3); }
+.tmdb-r-badge { position:absolute; top:5px; left:5px; font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; text-transform:uppercase; letter-spacing:0.5px; color:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.4); }
+.tmdb-r-badge.movie { background:#e74c3c; }
+.tmdb-r-badge.tv { background:#3498db; }
+.tmdb-r-badge.jikan { background:#2e51a2; }
+.tmdb-r { position:relative; }
 .img-upload-area { border:2px dashed var(--border2); border-radius:var(--r10); padding:20px; text-align:center; cursor:pointer; transition:all 0.15s; }
 .img-upload-area:hover { border-color:var(--purple); background:var(--purple-dim); }
 .img-upload-area i { font-size:28px; color:var(--text4); display:block; margin-bottom:8px; }
@@ -593,15 +598,42 @@ export function adminPanelPage(section: string = 'dashboard') {
       <input type="hidden" id="editAnimeId" value="">
 
       <div class="tmdb-panel">
-        <div class="tmdb-hd"><i class="fas fa-magic"></i> Auto-fill from TMDB</div>
+        <div class="tmdb-hd"><i class="fas fa-magic"></i> Auto-fill from TMDB <span style="font-weight:500;color:var(--text3);font-size:11px;">(Movies &amp; TV Shows)</span></div>
         <div class="tmdb-inp-row">
-          <input type="text" class="tmdb-inp" id="tmdbQuery" placeholder="Search anime title in TMDB..." style="flex:2;">
+          <input type="text" class="tmdb-inp" id="tmdbQuery" placeholder="Search any title (Movie or TV Series) in TMDB..." style="flex:2;" onkeydown="if(event.key==='Enter'){event.preventDefault();tmdbSearch();}">
+          <select class="tmdb-inp" id="tmdbType" style="flex:0 0 130px;min-width:120px;">
+            <option value="multi">All Types</option>
+            <option value="tv">TV Series</option>
+            <option value="movie">Movies</option>
+          </select>
           <button class="admin-btn admin-btn-purple" onclick="tmdbSearch()"><i class="fas fa-search"></i> Search TMDB</button>
         </div>
         <div style="font-size:11px; color:var(--text3);">TMDB API key is stored as a server secret.
           <a href="https://www.themoviedb.org/settings/api" target="_blank" style="color:var(--purple2);">Get free key →</a>
         </div>
         <div class="tmdb-results" id="tmdbResults"></div>
+      </div>
+
+      <div class="tmdb-panel" style="border-color:var(--gold,#f1c40f);">
+        <div class="tmdb-hd"><i class="fas fa-dragon" style="color:#2e51a2;"></i> Auto-fill from Jikan / MyAnimeList <span style="font-weight:500;color:var(--text3);font-size:11px;">(best for Japanese anime)</span></div>
+        <div class="tmdb-inp-row">
+          <input type="text" class="tmdb-inp" id="jikanQuery" placeholder="Search anime title on MyAnimeList..." style="flex:2;" onkeydown="if(event.key==='Enter'){event.preventDefault();jikanSearch();}">
+          <select class="tmdb-inp" id="jikanType" style="flex:0 0 130px;min-width:120px;">
+            <option value="">All Types</option>
+            <option value="tv">TV</option>
+            <option value="movie">Movie</option>
+            <option value="ova">OVA</option>
+            <option value="ona">ONA</option>
+            <option value="special">Special</option>
+          </select>
+          <button class="admin-btn admin-btn-purple" style="background:#2e51a2;border-color:#2e51a2;" onclick="jikanSearch()"><i class="fas fa-search"></i> Search with Jikan</button>
+        </div>
+        <div style="font-size:11px; color:var(--text3);">Jikan is the open REST mirror of MyAnimeList — no API key needed.
+          <a href="https://jikan.moe/" target="_blank" style="color:var(--purple2);">About Jikan →</a>
+          &nbsp;·&nbsp;
+          <a href="https://myanimelist.net/" target="_blank" style="color:var(--purple2);">MyAnimeList →</a>
+        </div>
+        <div class="tmdb-results" id="jikanResults"></div>
       </div>
 
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r12);padding:22px;">

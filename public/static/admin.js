@@ -220,6 +220,7 @@ window.resetAnimeForm = function() {
   document.getElementById('prevCover').style.display = 'none';
   document.getElementById('prevBanner').style.display = 'none';
   document.getElementById('tmdbResults').innerHTML = '';
+  const jr = document.getElementById('jikanResults'); if (jr) jr.innerHTML = '';
 };
 
 window.saveAnime = async function() {
@@ -276,37 +277,54 @@ window.saveAnime = async function() {
 };
 
 // ====== TMDB (Server-side API Key - no key needed in frontend) ======
+// Bug fix: previously this only searched TV shows. Now it uses /api/tmdb/search
+// which returns BOTH Movies and TV Shows, with a type filter dropdown.
 window.tmdbSearch = async function() {
   const q = getVal('tmdbQuery');
   if (!q) { showToast('Enter a search query', 'error'); return; }
+  const typeEl = document.getElementById('tmdbType');
+  const type = (typeEl && typeEl.value) ? typeEl.value : 'multi';
   const res = document.getElementById('tmdbResults');
   res.innerHTML = '<div style="padding:16px; color:var(--text3);"><i class="fas fa-spinner fa-spin"></i> Searching TMDB...</div>';
   try {
-    // Use server-side TMDB API - no key needed from frontend
-    const r = await fetch(`/api/tmdb/search/anime?q=${encodeURIComponent(q)}`, { headers: headers() });
+    // Hit the generic search endpoint (multi/movie/tv) so movies are no longer hidden.
+    const r = await fetch(`/api/tmdb/search?q=${encodeURIComponent(q)}&type=${encodeURIComponent(type)}`, { headers: headers() });
     const d = await r.json();
     if (d.error && d.error.includes('not configured')) {
       res.innerHTML = '<div style="padding:16px; color:var(--red);">TMDB API key not configured on server. Add TMDB_API_KEY as a Cloudflare secret.</div>';
       return;
     }
+    if (d.error) {
+      res.innerHTML = '<div style="padding:16px; color:var(--red);">TMDB error: ' + escHtml(d.error) + '</div>';
+      return;
+    }
     if (d.results && d.results.length > 0) {
-      res.innerHTML = d.results.map(item => `
-        <div class="tmdb-r" onclick="tmdbSelect('${item.id}')">
+      res.innerHTML = d.results.map(item => {
+        const mt = item.media_type === 'movie' ? 'movie' : 'tv';
+        const badgeLabel = mt === 'movie' ? 'Movie' : 'TV';
+        // Encode the media_type into the click handler so tmdbSelect knows which detail endpoint to hit
+        return `
+        <div class="tmdb-r" onclick="tmdbSelect('${item.id}','${mt}')">
+          <span class="tmdb-r-badge ${mt}">${badgeLabel}</span>
           <img src="${item.cover_image || 'https://placehold.co/110x165/0f0f17/6c5ce7?text=?'}" alt="${escHtml(item.title)}" onerror="this.src='https://placehold.co/110x165/0f0f17/6c5ce7?text=?'">
           <div class="tmdb-r-name">${escHtml(item.title)}</div>
-          <div class="tmdb-r-year">${item.release_year || ''}</div>
-        </div>`).join('');
+          <div class="tmdb-r-year">${item.release_year || ''}${item.rating ? ' • ★ ' + item.rating : ''}</div>
+        </div>`;
+      }).join('');
     } else {
       res.innerHTML = '<div style="padding:16px; color:var(--text3);">No results found.</div>';
     }
   } catch(e) { res.innerHTML = '<div style="padding:16px; color:var(--red);">TMDB search error: ' + e.message + '</div>'; }
 };
 
-window.tmdbSelect = async function(tmdbId) {
-  showToast('Fetching anime data from TMDB...', 'info');
+window.tmdbSelect = async function(tmdbId, mediaType) {
+  // Default to 'tv' to preserve old behaviour for any callers that didn't pass mediaType
+  const mt = mediaType === 'movie' ? 'movie' : 'tv';
+  showToast('Fetching ' + (mt === 'movie' ? 'movie' : 'TV') + ' data from TMDB...', 'info');
   try {
     // Server uses its own TMDB_API_KEY secret - always returns English data
-    const r = await fetch(`/api/tmdb/tv/${tmdbId}`, { headers: headers() });
+    const endpoint = mt === 'movie' ? `/api/tmdb/movie/${tmdbId}` : `/api/tmdb/tv/${tmdbId}`;
+    const r = await fetch(endpoint, { headers: headers() });
     const d = await r.json();
     if (d.error) { showToast('TMDB Error: ' + d.error, 'error'); return; }
     if (!d.title && !d.tmdb_id) { showToast('No data returned from TMDB', 'error'); return; }
@@ -410,6 +428,122 @@ window.tmdbSelect = async function(tmdbId) {
     const formEl = document.getElementById('fTitle');
     if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } catch(e) { showToast('Error fetching TMDB details: ' + e.message, 'error'); }
+};
+
+// ====== JIKAN / MyAnimeList (no key required) ======
+// Jikan v4 is the open REST mirror of MyAnimeList data, exposed by the
+// server at /api/jikan/*. It complements TMDB — especially for Japanese
+// anime where MAL's metadata (titles, studios, episode counts, scores)
+// is typically more accurate.
+window.jikanSearch = async function() {
+  const q = getVal('jikanQuery');
+  if (!q) { showToast('Enter a search query', 'error'); return; }
+  const typeEl = document.getElementById('jikanType');
+  const type = (typeEl && typeEl.value) ? typeEl.value : '';
+  const res = document.getElementById('jikanResults');
+  if (!res) return;
+  res.innerHTML = '<div style="padding:16px; color:var(--text3);"><i class="fas fa-spinner fa-spin"></i> Searching MyAnimeList (Jikan)...</div>';
+  try {
+    const params = new URLSearchParams({ q });
+    if (type) params.set('type', type);
+    params.set('limit', '20');
+    const r = await fetch('/api/jikan/search?' + params.toString(), { headers: headers() });
+    const d = await r.json();
+    if (d.error) {
+      res.innerHTML = '<div style="padding:16px; color:var(--red);">Jikan error: ' + escHtml(d.error) + '</div>';
+      return;
+    }
+    if (d.results && d.results.length > 0) {
+      res.innerHTML = d.results.map(item => {
+        const label = item.type || (item.media_type === 'movie' ? 'Movie' : 'TV');
+        return `
+        <div class="tmdb-r" onclick="jikanSelect('${item.mal_id || item.id}')">
+          <span class="tmdb-r-badge jikan">${escHtml(label)}</span>
+          <img src="${item.cover_image || 'https://placehold.co/110x165/0f0f17/2e51a2?text=MAL'}" alt="${escHtml(item.title)}" onerror="this.src='https://placehold.co/110x165/0f0f17/2e51a2?text=MAL'">
+          <div class="tmdb-r-name">${escHtml(item.title)}</div>
+          <div class="tmdb-r-year">${item.release_year || ''}${item.rating ? ' • ★ ' + item.rating : ''}</div>
+        </div>`;
+      }).join('');
+    } else {
+      res.innerHTML = '<div style="padding:16px; color:var(--text3);">No results found on MyAnimeList.</div>';
+    }
+  } catch(e) {
+    res.innerHTML = '<div style="padding:16px; color:var(--red);">Jikan search error: ' + e.message + '</div>';
+  }
+};
+
+window.jikanSelect = async function(malId) {
+  showToast('Fetching anime data from MyAnimeList (Jikan)...', 'info');
+  try {
+    const r = await fetch('/api/jikan/anime/' + encodeURIComponent(malId), { headers: headers() });
+    const d = await r.json();
+    if (d.error) { showToast('Jikan Error: ' + d.error, 'error'); return; }
+    if (!d.title && !d.mal_id) { showToast('No data returned from Jikan', 'error'); return; }
+
+    const filled = [];
+
+    // Title (English preferred)
+    const englishTitle = d.title_english || d.title || '';
+    setVal('fTitle', englishTitle); if (englishTitle) filled.push('Title');
+
+    // Native title (Japanese)
+    setVal('fTitleNative', d.title_native || ''); if (d.title_native) filled.push('Native Title');
+
+    // English title field
+    setVal('fTitleEnglish', d.title_english || d.title || ''); if (d.title_english) filled.push('English Title');
+
+    // Slug
+    if (englishTitle) { setVal('fSlug', slugify(englishTitle)); filled.push('Slug'); }
+
+    // Description
+    if (d.description) { setVal('fDescription', d.description); filled.push('Description'); }
+
+    // Cover image
+    if (d.cover_image) { setVal('fCoverImage', d.cover_image); filled.push('Cover Image'); }
+
+    // Banner image (Jikan rarely has true backdrops; falls back to trailer poster)
+    if (d.banner_image) { setVal('fBannerImage', d.banner_image); filled.push('Banner Image'); }
+
+    // Trailer
+    if (d.trailer_url) { setVal('fTrailer', d.trailer_url); filled.push('Trailer'); }
+
+    // Rating
+    if (d.rating) { setVal('fRating', String(d.rating)); filled.push('Rating (' + d.rating + ')'); }
+
+    // Year
+    if (d.release_year) { setVal('fYear', String(d.release_year)); filled.push('Year'); }
+
+    // Status / Type / Country
+    setVal('fStatus', d.status || 'Ongoing'); filled.push('Status');
+    setVal('fType', d.type || 'TV'); filled.push('Type');
+    setVal('fCountry', d.country || 'Japan'); filled.push('Country');
+
+    // Duration
+    if (d.duration) { setVal('fDuration', d.duration); filled.push('Duration'); }
+
+    // Genres (Jikan includes genres + themes + demographics)
+    if (d.genres && d.genres.length > 0) {
+      setVal('fGenres', Array.isArray(d.genres) ? d.genres.join(', ') : d.genres);
+      filled.push('Genres');
+    }
+
+    // Studios
+    if (d.studios && d.studios.length > 0) {
+      setVal('fStudios', Array.isArray(d.studios) ? d.studios.join(', ') : d.studios);
+      filled.push('Studios');
+    }
+
+    previewImg('fCoverImage', 'prevCover');
+    previewImg('fBannerImage', 'prevBanner');
+
+    showToast('✓ Jikan/MAL filled: ' + filled.join(', '), 'success');
+    const jr = document.getElementById('jikanResults'); if (jr) jr.innerHTML = '';
+
+    const formEl = document.getElementById('fTitle');
+    if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch(e) {
+    showToast('Error fetching Jikan details: ' + e.message, 'error');
+  }
 };
 
 // ====== IMAGE HANDLING ======
