@@ -32,23 +32,51 @@ ${siteUrl ? `<meta property="og:url" content="${siteUrl}">` : ''}
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="${siteName}">
 <!-- Apple Touch Icons -->
-<link rel="apple-touch-icon" href="/static/icon.png">
-<link rel="apple-touch-icon" sizes="167x167" href="/static/icon.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/static/icon.png">
-<link rel="apple-touch-icon" sizes="144x144" href="/static/icon.png">
-<link rel="apple-touch-icon" sizes="128x128" href="/static/icon.png">
-<link rel="apple-touch-icon" sizes="96x96"   href="/static/icon.png">
+<link rel="apple-touch-icon" href="/static/icon-180x180.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/static/icon-167x167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/static/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/static/icon-144x144.png">
+<link rel="apple-touch-icon" sizes="128x128" href="/static/icon-128x128.png">
+<link rel="apple-touch-icon" sizes="96x96"   href="/static/icon-96x96.png">
 <!-- Favicons -->
-<link rel="icon" type="image/png" sizes="32x32" href="/static/icon.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/static/icon.png">
-<link rel="icon" type="image/x-icon" href="/static/icon.png">
-<link rel="shortcut icon" href="/static/icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/icon-16x16.png">
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="shortcut icon" href="/static/favicon.ico">
 <!-- PWA Manifest -->
 <link rel="manifest" href="/manifest.json">
+<!-- Critical CSS inline for LCP speed (fonts + layout essentials) -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#080810;color:#e8e8f0;min-height:100vh;overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none;background:none;font-family:inherit}
+img{display:block;max-width:100%}
+.site-header{position:sticky;top:0;z-index:900;background:rgba(8,8,16,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.05);height:64px}
+.header-inner{display:flex;align-items:center;gap:16px;max-width:1400px;margin:0 auto;padding:0 20px;height:100%}
+.logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.site-logo-img{height:38px;width:auto;display:block}
+.site-main{padding-top:0}
+.hero-slider{position:relative;width:100%;min-height:400px;overflow:hidden;background:#080810}
+.hero-slide{position:absolute;inset:0;opacity:0;transition:opacity 0.6s ease;display:flex;align-items:flex-end}
+.hero-slide.active{opacity:1;position:relative}
+.hero-bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-gradient{position:absolute;inset:0;background:linear-gradient(to right,rgba(8,8,16,0.95) 0%,rgba(8,8,16,0.6) 50%,rgba(8,8,16,0.1) 100%),linear-gradient(to top,rgba(8,8,16,1) 0%,rgba(8,8,16,0) 40%)}
+.hero-content{position:relative;z-index:2;padding:40px 48px 48px;max-width:600px}
+.hero-title{font-size:clamp(22px,4vw,38px);font-weight:900;line-height:1.2;margin-bottom:10px;color:#fff}
+</style>
+<!-- Preload critical assets -->
+<link rel="preload" href="/static/style.css" as="style">
+<link rel="preload" href="/static/app.js" as="script">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+<!-- Fonts: load with display=swap + media trick for non-blocking -->
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"></noscript>
+<!-- FontAwesome: deferred to avoid render-blocking -->
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"></noscript>
 <link rel="stylesheet" href="/static/style.css">
 ${extraHead}
 </head>
@@ -60,7 +88,7 @@ ${extraHead}
 
     <!-- Logo -->
     <a href="/" class="logo">
-      <img src="/static/logo.png" alt="${siteName}" class="site-logo-img" id="headerSiteName">
+      <img src="/static/logo.png" alt="${siteName}" class="site-logo-img" id="headerSiteName" width="160" height="40" fetchpriority="high">
     </a>
 
     <!-- Search bar (desktop: hidden until search icon clicked) -->
@@ -200,7 +228,7 @@ ${content}
     <div class="footer-top">
       <div class="footer-brand">
         <a href="/" class="footer-logo">
-          <img src="/static/logo.png" alt="${siteName}" class="site-logo-img footer-logo-img" id="footerSiteName">
+          <img src="/static/logo.png" alt="${siteName}" class="site-logo-img footer-logo-img" id="footerSiteName" width="160" height="36" loading="lazy">
         </a>
         <p class="footer-tagline" id="footerTagline">Your ultimate destination for anime streaming.<br>Free, HD, updated daily.</p>
         <div class="footer-social" id="footerSocial">
@@ -280,7 +308,7 @@ ${content}
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- ==================== SCRIPTS ==================== -->
-<script src="/static/app.js"></script>
+<script src="/static/app.js" defer></script>
 
 <!-- ==================== PWA: INSTALL MODAL + FAB ==================== -->
 <!-- Install Modal — Mobile Only, shows on first Android Chrome visit -->
@@ -289,7 +317,7 @@ ${content}
   <div class="pwa-modal-sheet">
     <div class="pwa-modal-handle"></div>
     <div class="pwa-modal-content">
-      <img src="/static/icon.png" alt="${siteName} icon" class="pwa-modal-icon">
+      <img src="/static/icon-192x192.png" alt="${siteName} icon" class="pwa-modal-icon" width="88" height="88">
       <div class="pwa-modal-text">
         <h2 class="pwa-modal-title" id="pwaModalTitle">${siteName}</h2>
         <p class="pwa-modal-desc">Install the app for the best experience — watch offline, faster loading, and no browser bar.</p>

@@ -2421,6 +2421,14 @@ section.hero-slider + section.hero-slider { display: none !important; }
   .ep-nav-row { padding: 0 14px; }
   .ep-list { max-height: 290px; }
 
+  /* New watch control bar mobile */
+  .watch-ctrl-bar { padding: 10px 14px 8px; }
+  .wcb-divider { margin: 2px 14px 10px; }
+  .watch-servers-compact { padding: 0 14px 12px; }
+  .watch-tabs-container { border-radius: 0; border-left: none; border-right: none; }
+  .watch-tab-search-input { width: 80px; font-size: 11px; }
+  .share-popup-platforms { grid-template-columns: repeat(3,1fr); }
+
   /* Search */
   .search-wrap { padding: 18px 14px; }
   .filter-row { gap: 11px; }
@@ -2976,4 +2984,82 @@ section.hero-slider + section.hero-slider { display: none !important; }
 /* ── Splash screen prevent FOUC ─────────────────────────── */
 @media (display-mode: standalone) {
   body { background: #080810; }
+}
+
+/* ================================================================
+   PERFORMANCE OPTIMIZATIONS
+   LCP / CLS / FID improvements for mobile PageSpeed
+================================================================ */
+
+/* Prevent layout shift for images with known aspect ratios */
+.acard-img { contain: layout; }
+.acard-img img { aspect-ratio: 2/3; }
+.hero-bg-img { content-visibility: auto; }
+
+/* content-visibility for off-screen sections (reduces rendering work) */
+.home-section-ongoing,
+.home-section-recent,
+.home-section-movies,
+.home-section-completed,
+.home-section-upcoming,
+.home-section-trending {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}
+.home-schedule-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Reduce paint area — avoid costly repaints during scroll */
+.scroll-row { will-change: scroll-position; }
+.acard { will-change: transform; }
+
+/* Reserve space for logo image to prevent CLS */
+.site-logo-img {
+  height: 40px;
+  width: auto;
+  aspect-ratio: auto;
+}
+
+/* Skeleton loading shimmer for cards */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.acard-img img[src=""] ,
+.acard-img img:not([src]) {
+  background: linear-gradient(90deg, var(--bg4) 25%, var(--bg5) 50%, var(--bg4) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Reduce layout thrashing from fixed header on mobile */
+@media (max-width: 768px) {
+  .site-header { contain: layout style; }
+  .hero-slider { contain: layout style paint; }
+
+  /* Faster hero on mobile: reduce scale animation cost */
+  .hero-bg-img {
+    transform: none !important;
+    transition: none !important;
+  }
+  .hero-slide.active .hero-bg-img { transform: none !important; }
+
+  /* Trim hero title animation on mobile for faster paint */
+  .hero-title { animation: none; }
+
+  /* Stop backdrop-filter on mobile header (GPU-intensive) */
+  .site-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(8,8,16,0.97);
+  }
+}
+
+/* Improve text rendering performance */
+.hero-title,
+.acard-name,
+.sec-title {
+  text-rendering: optimizeSpeed;
 }

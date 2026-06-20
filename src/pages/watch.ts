@@ -25,7 +25,6 @@ export function watchPage(data: { anime: any, episode: any, allEpisodes: any[], 
       Your browser does not support video playback.
     </video>`
   } else {
-    // No video source - show placeholder
     playerHTML = `
     <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:#0a0a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
       <i class="fas fa-video-slash" style="font-size:48px;color:var(--text4);"></i>
@@ -39,6 +38,10 @@ export function watchPage(data: { anime: any, episode: any, allEpisodes: any[], 
 
   // Sort episodes descending (newest first)
   const sortedEpisodes = [...allEpisodes].sort((a, b) => b.episode_number - a.episode_number)
+
+  // Prev/Next URLs
+  const prevUrl = prevEp ? `/watch/${anime.slug}-episode-${prevEp.episode_number}` : ''
+  const nextUrl = nextEp ? `/watch/${anime.slug}-episode-${nextEp.episode_number}` : ''
 
   const content = `
 ${breadcrumb([
@@ -59,17 +62,73 @@ ${breadcrumb([
       </div>
     </div>
 
-    <!-- Action Buttons Row (Watchlist, Report, Share) -->
-    <div class="watch-action-row">
-      <button class="watch-action-btn" id="wlBtn" data-slug="${anime.slug}" onclick="addToWatchlist()">
-        <i class="fas fa-bookmark"></i> Watchlist
-      </button>
-      <button class="watch-action-btn" onclick="reportIssue()">
-        <i class="fas fa-flag"></i> Report
-      </button>
-      <button class="watch-action-btn" onclick="shareLink()">
-        <i class="fas fa-share-alt"></i> Share
-      </button>
+    <!-- ====== ACTION BAR: Prev | Watchlist + Share | Next ====== -->
+    <div class="watch-ctrl-bar">
+      <!-- Left: Prev -->
+      <div class="wcb-left">
+        ${prevEp
+          ? `<a href="${prevUrl}" class="wcb-nav-btn wcb-prev">
+              <i class="fas fa-chevron-left"></i>
+              <span class="wcb-nav-label">Prev</span>
+            </a>`
+          : `<button class="wcb-nav-btn wcb-prev disabled" disabled>
+              <i class="fas fa-chevron-left"></i>
+              <span class="wcb-nav-label">Prev</span>
+            </button>`
+        }
+      </div>
+
+      <!-- Middle: Watchlist + Share -->
+      <div class="wcb-middle">
+        <button class="wcb-pill-btn" id="wlBtn" data-slug="${anime.slug}" onclick="addToWatchlist()">
+          <i class="fas fa-bookmark"></i>
+          <span>Watchlist</span>
+        </button>
+        <button class="wcb-pill-btn" onclick="openShareMenu()">
+          <i class="fas fa-share-alt"></i>
+          <span>Share</span>
+        </button>
+      </div>
+
+      <!-- Right: Next -->
+      <div class="wcb-right">
+        ${nextEp
+          ? `<a href="${nextUrl}" class="wcb-nav-btn wcb-next">
+              <span class="wcb-nav-label">Next</span>
+              <i class="fas fa-chevron-right"></i>
+            </a>`
+          : `<button class="wcb-nav-btn wcb-next disabled" disabled>
+              <span class="wcb-nav-label">Next</span>
+              <i class="fas fa-chevron-right"></i>
+            </button>`
+        }
+      </div>
+    </div>
+
+    <!-- Divider line -->
+    <div class="wcb-divider"></div>
+
+    <!-- Server Selection Section (compact) -->
+    <div class="watch-servers-compact" id="watchServersCompact">
+      <div class="wsc-label"><i class="fas fa-server"></i> Server</div>
+      <div class="wsc-btns" id="wscBtns">
+        ${hasEmbed
+          ? `<button class="wsc-btn active" data-src="${episode.embed_url}" data-type="embed" onclick="switchServer(this)">
+              <i class="fas fa-play-circle"></i> Server 1
+            </button>`
+          : ''
+        }
+        ${hasVideo
+          ? `<button class="wsc-btn${!hasEmbed ? ' active' : ''}" data-src="${episode.video_url}" data-type="video" onclick="switchServer(this)">
+              <i class="fas fa-film"></i> Direct
+            </button>`
+          : ''
+        }
+        ${!hasEmbed && !hasVideo
+          ? `<span class="wsc-no-src">No sources available</span>`
+          : ''
+        }
+      </div>
     </div>
 
     <!-- ====== TABBED SECTION: Episodes + Comments ====== -->
@@ -85,18 +144,18 @@ ${breadcrumb([
           <i class="fas fa-comments"></i> Comments
           <span class="watch-tab-count" id="tabCommentsCount"></span>
         </button>
+
+        <!-- Search episode input — only shows when Episodes tab is active, pinned right -->
+        <div class="watch-tab-search-wrap" id="tabEpSearchWrap">
+          <i class="fas fa-search wts-icon"></i>
+          <input type="text" class="watch-tab-search-input" id="crEpSearch"
+            placeholder="Search episode..." autocomplete="off"
+            oninput="filterCrEpisodes(this.value)">
+        </div>
       </div>
 
       <!-- Tab: Episodes -->
       <div class="watch-tab-panel" id="panelEpisodes">
-        <div class="cr-ep-head-right" style="padding:10px 14px 0;">
-          <div class="cr-ep-search-wrap">
-            <i class="fas fa-search cr-ep-search-icon"></i>
-            <input type="text" class="cr-ep-search" id="crEpSearch"
-              placeholder="Search episode..." autocomplete="off"
-              oninput="filterCrEpisodes(this.value)">
-          </div>
-        </div>
         <div class="cr-ep-list" id="crEpList">
           ${sortedEpisodes.map(ep => {
             const isActive = ep.episode_number === episode.episode_number
@@ -110,6 +169,7 @@ ${breadcrumb([
                title="${title}">
               <div class="cr-ep-thumb-wrap">
                 <img src="${thumb}" alt="EP ${ep.episode_number}" class="cr-ep-thumb"
+                     loading="lazy"
                      onerror="this.parentElement.style.background='var(--bg5)'">
                 ${isActive ? `<div class="cr-ep-playing"><i class="fas fa-volume-up"></i></div>` : ''}
                 <div class="cr-ep-num-badge">EP ${ep.episode_number}</div>
@@ -182,6 +242,47 @@ ${breadcrumb([
 
 </div><!-- end .watch-wrap -->
 
+<!-- ====== SHARE MENU POPUP ====== -->
+<div id="shareMenuOverlay" class="share-overlay" onclick="closeShareMenu()"></div>
+<div id="shareMenuPopup" class="share-popup" role="dialog" aria-modal="true" aria-label="Share">
+  <div class="share-popup-header">
+    <span class="share-popup-title"><i class="fas fa-share-alt"></i> Share Episode</span>
+    <button class="share-popup-close" onclick="closeShareMenu()" title="Close"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="share-popup-url-row">
+    <input type="text" class="share-url-input" id="shareUrlInput" readonly>
+    <button class="share-copy-btn" id="shareCopyBtn" onclick="copyShareLink()">
+      <i class="fas fa-copy"></i> Copy
+    </button>
+  </div>
+  <div class="share-popup-platforms">
+    <button class="share-platform-btn share-fb" onclick="shareTo('facebook')">
+      <i class="fab fa-facebook-f"></i>
+      <span>Facebook</span>
+    </button>
+    <button class="share-platform-btn share-tw" onclick="shareTo('twitter')">
+      <i class="fab fa-x-twitter"></i>
+      <span>X / Twitter</span>
+    </button>
+    <button class="share-platform-btn share-wa" onclick="shareTo('whatsapp')">
+      <i class="fab fa-whatsapp"></i>
+      <span>WhatsApp</span>
+    </button>
+    <button class="share-platform-btn share-tg" onclick="shareTo('telegram')">
+      <i class="fab fa-telegram-plane"></i>
+      <span>Telegram</span>
+    </button>
+    <button class="share-platform-btn share-rd" onclick="shareTo('reddit')">
+      <i class="fab fa-reddit-alien"></i>
+      <span>Reddit</span>
+    </button>
+    <button class="share-platform-btn share-native" onclick="shareNative()" id="shareNativeBtn" style="display:none;">
+      <i class="fas fa-share"></i>
+      <span>More</span>
+    </button>
+  </div>
+</div>
+
 <script>
 // Save to watch history
 (function(){
@@ -214,11 +315,89 @@ function addToWatchlist() {
     window.showToast('Added to watchlist!', 'success');
   }
 }
-function reportIssue() { window.showToast('Issue reported. Thank you!', 'info'); }
-function shareLink() {
-  navigator.clipboard.writeText(window.location.href)
-    .then(() => window.showToast('Link copied!', 'success'))
-    .catch(() => window.showToast('Copy: ' + window.location.href, 'info'));
+
+// ====== SHARE MENU ======
+function openShareMenu() {
+  const overlay = document.getElementById('shareMenuOverlay');
+  const popup   = document.getElementById('shareMenuPopup');
+  const urlInput = document.getElementById('shareUrlInput');
+  if (urlInput) urlInput.value = window.location.href;
+
+  // Show native share button if supported
+  const nativeBtn = document.getElementById('shareNativeBtn');
+  if (nativeBtn && navigator.share) nativeBtn.style.display = '';
+
+  overlay.classList.add('active');
+  popup.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeShareMenu() {
+  const overlay = document.getElementById('shareMenuOverlay');
+  const popup   = document.getElementById('shareMenuPopup');
+  overlay.classList.remove('active');
+  popup.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function copyShareLink() {
+  const url = window.location.href;
+  const btn = document.getElementById('shareCopyBtn');
+  navigator.clipboard.writeText(url)
+    .then(() => {
+      if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> Copied!'; btn.classList.add('copied'); }
+      window.showToast && window.showToast('Link copied to clipboard!', 'success');
+      setTimeout(() => { if (btn) { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; btn.classList.remove('copied'); } }, 2000);
+    })
+    .catch(() => {
+      const inp = document.getElementById('shareUrlInput');
+      if (inp) { inp.select(); document.execCommand('copy'); }
+      window.showToast && window.showToast('Link copied!', 'success');
+    });
+}
+
+function shareTo(platform) {
+  const url = encodeURIComponent(window.location.href);
+  const title = encodeURIComponent('Watch ${anime.title.replace(/'/g, "\\'")} Episode ${episode.episode_number}');
+  let shareUrl = '';
+  switch(platform) {
+    case 'facebook':  shareUrl = \`https://www.facebook.com/sharer/sharer.php?u=\${url}\`; break;
+    case 'twitter':   shareUrl = \`https://twitter.com/intent/tweet?url=\${url}&text=\${title}\`; break;
+    case 'whatsapp':  shareUrl = \`https://wa.me/?text=\${title}%20\${url}\`; break;
+    case 'telegram':  shareUrl = \`https://t.me/share/url?url=\${url}&text=\${title}\`; break;
+    case 'reddit':    shareUrl = \`https://www.reddit.com/submit?url=\${url}&title=\${title}\`; break;
+  }
+  if (shareUrl) window.open(shareUrl, '_blank', 'noopener,width=600,height=500');
+}
+
+async function shareNative() {
+  try {
+    await navigator.share({
+      title: '${anime.title.replace(/'/g, "\\'")} — Episode ${episode.episode_number}',
+      url: window.location.href
+    });
+  } catch(e) {}
+}
+
+// ====== SERVER SWITCHING ======
+function switchServer(btn) {
+  const btns = document.querySelectorAll('.wsc-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const src  = btn.getAttribute('data-src');
+  const type = btn.getAttribute('data-type');
+  const box  = document.getElementById('playerBox');
+  if (!box || !src) return;
+
+  const inner = box.querySelector('div[style]');
+  if (!inner) return;
+
+  if (type === 'embed') {
+    inner.innerHTML = \`<iframe src="\${src}" allowfullscreen allow="autoplay; fullscreen; picture-in-picture; encrypted-media" scrolling="no" frameborder="0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"></iframe>\`;
+  } else {
+    inner.innerHTML = \`<video controls style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;"><source src="\${src}" type="video/mp4">Your browser does not support video.</video>\`;
+  }
 }
 
 // Tab switching
@@ -227,17 +406,20 @@ function switchWatchTab(tab) {
   const commentsPanel = document.getElementById('panelComments');
   const episodesBtn   = document.getElementById('tabEpisodes');
   const commentsBtn   = document.getElementById('tabComments');
+  const searchWrap    = document.getElementById('tabEpSearchWrap');
 
   if (tab === 'episodes') {
     episodesPanel.style.display = '';
     commentsPanel.style.display = 'none';
     episodesBtn.classList.add('active');
     commentsBtn.classList.remove('active');
+    if (searchWrap) searchWrap.style.display = '';
   } else {
     episodesPanel.style.display = 'none';
     commentsPanel.style.display = '';
     episodesBtn.classList.remove('active');
     commentsBtn.classList.add('active');
+    if (searchWrap) searchWrap.style.display = 'none';
   }
 }
 
@@ -257,13 +439,12 @@ function filterCrEpisodes(val) {
   if (empty) empty.style.display = found === 0 ? 'block' : 'none';
 }
 
-// Auto-scroll to active episode on load (inside the episode list container, no page scroll)
+// Auto-scroll to active episode on load
 document.addEventListener('DOMContentLoaded', function() {
   const active = document.querySelector('.cr-ep-item.active');
   if (active) {
     const list = document.getElementById('crEpList');
     if (list) {
-      // Scroll only within the episode list container, never the page
       const itemTop = active.offsetTop;
       const listHeight = list.clientHeight;
       const itemHeight = active.clientHeight;
@@ -570,33 +751,122 @@ window.loadMoreComments = function() {
 </script>
 
 <style>
-/* ===== Watch Action Row ===== */
-.watch-action-row {
-  display: flex;
-  gap: 10px;
-  padding: 10px 0;
-  flex-wrap: wrap;
-}
-.watch-action-btn {
+/* ===== Watch Control Bar ===== */
+.watch-ctrl-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0 8px;
+}
+.wcb-left, .wcb-right { flex: 0 0 auto; }
+.wcb-middle { display: flex; gap: 8px; align-items: center; justify-content: center; flex: 1; }
+
+/* Nav buttons (Prev/Next) */
+.wcb-nav-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 9px 18px;
   background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--r8);
+  border: 1px solid var(--border2);
+  border-radius: 50px;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.wcb-nav-btn:hover:not(.disabled) {
+  background: linear-gradient(135deg, var(--purple) 0%, #4f46e5 100%);
+  border-color: var(--purple);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+  transform: translateY(-1px);
+}
+.wcb-nav-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wcb-nav-label { font-size: 13px; }
+
+/* Pill buttons (Watchlist/Share) */
+.wcb-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 50px;
   color: var(--text2);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  text-decoration: none;
 }
-.watch-action-btn:hover {
+.wcb-pill-btn:hover {
+  background: var(--bg5);
+  border-color: rgba(108,92,231,0.5);
+  color: var(--purple3);
+  transform: translateY(-1px);
+}
+.wcb-pill-btn i { font-size: 13px; }
+
+/* Divider */
+.wcb-divider {
+  height: 1px;
+  background: var(--border2);
+  margin: 2px 0 10px;
+}
+
+/* ===== Server Selection (Compact) ===== */
+.watch-servers-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 12px;
+  flex-wrap: wrap;
+}
+.wsc-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.wsc-btns { display: flex; gap: 7px; flex-wrap: wrap; }
+.wsc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
   background: var(--bg4);
-  border-color: rgba(108,92,231,0.4);
-  color: var(--purple2);
+  border: 1px solid var(--border2);
+  border-radius: 50px;
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
 }
+.wsc-btn.active {
+  background: rgba(124,58,237,0.18);
+  border-color: var(--purple);
+  color: var(--purple3);
+}
+.wsc-btn:hover:not(.active) {
+  border-color: var(--purple);
+  color: var(--purple3);
+}
+.wsc-no-src { font-size: 11px; color: var(--text4); font-style: italic; }
 
 /* ===== Watch Tabs Container ===== */
 .watch-tabs-container {
@@ -604,20 +874,22 @@ window.loadMoreComments = function() {
   border: 1px solid var(--border);
   border-radius: var(--r12);
   overflow: hidden;
-  margin-top: 14px;
+  margin-top: 4px;
 }
 
 /* Tab Header */
 .watch-tabs-header {
   display: flex;
+  align-items: center;
   border-bottom: 1px solid var(--border);
   background: var(--bg2);
+  position: relative;
 }
 .watch-tab-btn {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 13px 20px;
+  padding: 13px 18px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -629,6 +901,7 @@ window.loadMoreComments = function() {
   position: relative;
   bottom: -1px;
   font-family: inherit;
+  white-space: nowrap;
 }
 .watch-tab-btn:hover {
   color: var(--text1);
@@ -656,10 +929,166 @@ window.loadMoreComments = function() {
   color: var(--purple2);
 }
 
+/* Episode search in tab header */
+.watch-tab-search-wrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 50px;
+  padding: 5px 12px;
+  margin-right: 10px;
+  transition: border-color 0.2s;
+}
+.watch-tab-search-wrap:focus-within {
+  border-color: rgba(124,58,237,0.5);
+}
+.wts-icon { color: var(--text4); font-size: 11px; }
+.watch-tab-search-input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text1);
+  font-size: 12px;
+  width: 120px;
+  font-family: inherit;
+}
+.watch-tab-search-input::placeholder { color: var(--text4); }
+
 /* Tab Panels */
 .watch-tab-panel {
   min-height: 200px;
 }
+
+/* ===== Share Popup ===== */
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.share-overlay.active { opacity: 1; pointer-events: auto; }
+
+.share-popup {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  z-index: 9999;
+  background: linear-gradient(160deg, #16162a 0%, #0f0f1e 100%);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 20px;
+  padding: 22px;
+  width: min(440px, calc(100vw - 32px));
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,58,237,0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+}
+.share-popup.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.share-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.share-popup-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.share-popup-title i { color: var(--purple3); }
+.share-popup-close {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 50%;
+  color: var(--text3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.share-popup-close:hover { color: var(--text1); border-color: var(--border3); }
+
+.share-popup-url-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.share-url-input {
+  flex: 1;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: var(--r8);
+  padding: 9px 12px;
+  color: var(--text3);
+  font-size: 12px;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.share-copy-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 16px;
+  background: var(--purple);
+  border: none;
+  border-radius: var(--r8);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.share-copy-btn:hover { background: var(--purple2); }
+.share-copy-btn.copied { background: var(--green); }
+
+.share-popup-platforms {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+.share-platform-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 13px 8px;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: var(--r12);
+  color: var(--text2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.share-platform-btn i { font-size: 20px; }
+.share-platform-btn:hover { transform: translateY(-2px); border-color: var(--border3); }
+.share-fb  { } .share-fb:hover  { background: #1877f215; color: #1877f2; border-color: #1877f240; }
+.share-tw  { } .share-tw:hover  { background: #00000020; color: #e7e7e7;  border-color: #33333360; }
+.share-wa  { } .share-wa:hover  { background: #25d36615; color: #25d366; border-color: #25d36640; }
+.share-tg  { } .share-tg:hover  { background: #229ed915; color: #229ed9; border-color: #229ed940; }
+.share-rd  { } .share-rd:hover  { background: #ff451215; color: #ff4512; border-color: #ff451240; }
+.share-native { } .share-native:hover { background: rgba(124,58,237,0.12); color: var(--purple3); border-color: var(--purple); }
 
 /* ===== Comments Styles ===== */
 .comment-post-box { margin-bottom:16px; }
@@ -684,6 +1113,16 @@ window.loadMoreComments = function() {
 .comment-delete-btn:hover { color:var(--red) !important; }
 .comment-replies { margin-top:10px; padding-left:16px; border-left:2px solid var(--border); display:flex; flex-direction:column; gap:8px; }
 .comment-reply { display:flex; gap:8px; }
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .wcb-nav-label { display: none; }
+  .wcb-nav-btn { padding: 9px 14px; }
+  .wcb-pill-btn span { display: none; }
+  .wcb-pill-btn { padding: 9px 14px; }
+  .watch-tab-search-input { width: 90px; }
+  .share-popup-platforms { grid-template-columns: repeat(3, 1fr); }
+}
 </style>
 `
 

@@ -461,19 +461,37 @@ function initSiteSettings() {
 
 // ============ INIT ============
 document.addEventListener('DOMContentLoaded', () => {
+  // Critical: auth + interactive UI — run immediately
   checkAuth();
   initUserMenu();
-  initHeaderScroll();
   initMobileMenu();
   initSearchOverlay();
   initBottomNav();
   initNavActive();
-  initScheduleTabs();
-  initHeroSlider();
-  initWatchlistBtn();
-  initBroadcastBanner();
-  initFooterSocials();
-  initPageAnimations();
-  initCardTouchFeedback();
-  initSiteSettings();
+  initHeaderScroll();
+
+  // Slightly deferred: hero slider (waits for images to be ready)
+  requestAnimationFrame(() => {
+    initHeroSlider();
+    initWatchlistBtn();
+  });
+
+  // Non-critical: defer until after first paint
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
+      initBroadcastBanner();
+      initFooterSocials();
+      initSiteSettings();
+      initPageAnimations();
+      initCardTouchFeedback();
+    }, { timeout: 3000 });
+  } else {
+    setTimeout(() => {
+      initBroadcastBanner();
+      initFooterSocials();
+      initSiteSettings();
+      initPageAnimations();
+      initCardTouchFeedback();
+    }, 200);
+  }
 });

@@ -25,6 +25,7 @@ export function homePage(data: {
   <div class="hero-slide${i === 0 ? ' active' : ''}" data-index="${i}">
     <img src="${f.banner_image || f.cover_image || ''}" 
          alt="${f.title}" class="hero-bg-img" loading="${i === 0 ? 'eager' : 'lazy'}"
+         ${i === 0 ? 'fetchpriority="high" decoding="sync"' : 'decoding="async"'}
          onerror="this.style.opacity='0'">
     <div class="hero-gradient"></div>
     <div class="hero-content">
