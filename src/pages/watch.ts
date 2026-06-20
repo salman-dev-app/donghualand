@@ -319,11 +319,15 @@ function openSharePopup() {
     const nb = document.getElementById('nativeShareBtn');
     if (nb) nb.style.display = '';
   }
+  // Prevent body scroll while modal is open
+  document.body.style.overflow = 'hidden';
 }
 
 function closeSharePopup() {
   const modal = document.getElementById('shareModal');
   if (modal) modal.classList.remove('open');
+  // Restore body scroll
+  document.body.style.overflow = '';
 }
 
 function closeShareOnBackdrop(e) {
@@ -836,6 +840,70 @@ window.loadMoreComments = function() {
   color: var(--accent2);
 }
 
+/* ===================================================
+   MOBILE BUTTON ROW — clean, full-width, all text visible
+=================================================== */
+@media (max-width: 767px) {
+  .watch-below-player-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto 1fr;
+    gap: 8px;
+    padding: 10px 0 14px;
+    align-items: stretch;
+  }
+
+  /* Left side (Prev) */
+  .wbp-side.wbp-left {
+    grid-column: 1;
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* Middle (Watchlist + Share) */
+  .wbp-middle {
+    grid-column: 2 / 4;
+    flex: unset;
+    gap: 8px;
+  }
+
+  /* Right side (Next) */
+  .wbp-side.wbp-right {
+    grid-column: 4;
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+
+  /* Nav buttons — full height, keep text */
+  .wbp-nav-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    gap: 6px;
+    height: 100%;
+    min-height: 42px;
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* KEEP nav label text visible on mobile */
+  .wbp-nav-label {
+    display: inline !important;
+  }
+
+  /* Action buttons — keep text visible */
+  .wbp-action-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    gap: 6px;
+    min-height: 42px;
+  }
+
+  /* KEEP action button text visible on mobile */
+  .wbp-action-btn span {
+    display: inline !important;
+  }
+}
+
 /* Thin horizontal border separator */
 .watch-divider {
   height: 1px;
@@ -928,25 +996,34 @@ window.loadMoreComments = function() {
 
 /* ===================================================
    SHARE MODAL
+   — Uses visibility/opacity instead of display:none
+     to avoid layout-flash on initial page render.
+     backdrop-filter is only applied when open.
 =================================================== */
 .share-modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.78);
+  background: rgba(0,0,0,0);
   z-index: 3000;
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Start invisible & non-interactive */
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  /* Smooth transition — no layout flash */
+  transition: opacity 0.22s ease, background 0.22s ease, visibility 0s linear 0.22s;
+  /* No backdrop-filter by default — applied only when open */
 }
 .share-modal-backdrop.open {
-  display: flex;
-  animation: shareBackdropIn 0.2s ease;
-}
-@keyframes shareBackdropIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.22s ease, background 0.22s ease, visibility 0s linear 0s;
 }
 
 .share-modal-box {
@@ -957,11 +1034,15 @@ window.loadMoreComments = function() {
   width: 100%;
   max-width: 420px;
   box-shadow: 0 30px 90px rgba(0,0,0,0.8), 0 0 0 1px rgba(124,58,237,0.1);
-  animation: shareBoxIn 0.22s ease;
+  /* GPU-composited transform — prevents repaints on open */
+  will-change: transform, opacity;
+  transform: scale(0.94) translateY(14px);
+  opacity: 0;
+  transition: transform 0.22s ease, opacity 0.22s ease;
 }
-@keyframes shareBoxIn {
-  from { opacity: 0; transform: scale(0.94) translateY(14px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+.share-modal-backdrop.open .share-modal-box {
+  transform: scale(1) translateY(0);
+  opacity: 1;
 }
 
 .share-modal-head {
@@ -1108,29 +1189,9 @@ window.loadMoreComments = function() {
 .comment-reply { display:flex; gap:8px; }
 
 /* ===================================================
-   RESPONSIVE
+   RESPONSIVE — Tabs, Episode Search, Share Grid
 =================================================== */
 @media (max-width: 600px) {
-  .watch-below-player-row {
-    gap: 6px;
-  }
-  .wbp-nav-btn {
-    padding: 8px 11px;
-    font-size: 12px;
-  }
-  .wbp-nav-label {
-    display: none;
-  }
-  .wbp-action-btn {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  .wbp-action-btn span {
-    display: none;
-  }
-  .wbp-action-btn {
-    padding: 8px 13px;
-  }
   .watch-tabs-header {
     flex-wrap: nowrap;
     padding-right: 8px;
@@ -1157,8 +1218,22 @@ window.loadMoreComments = function() {
 }
 
 @media (max-width: 400px) {
+  /* Extra small screens — slightly tighter buttons but still show text */
+  .wbp-nav-btn {
+    padding: 10px 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .wbp-action-btn {
+    padding: 10px 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .watch-below-player-row {
+    gap: 6px;
+  }
   .wbp-middle {
-    gap: 5px;
+    gap: 6px;
   }
   .watch-tabs-header-right .cr-ep-search {
     width: 90px !important;
