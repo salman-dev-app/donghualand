@@ -439,16 +439,25 @@ function initSiteSettings() {
     .then(d => {
       if (!d.data) return;
       const s = d.data;
-      // Site name updates
+      // Site name updates — guard against IMG nodes (only update alt for images)
       if (s.site_name) {
-        const els = document.querySelectorAll('#headerSiteName, #footerSiteName, #footerCopy');
-        els.forEach(el => {
+        document.querySelectorAll('#headerSiteName, #footerSiteName, #footerCopy').forEach(el => {
           if (el.id === 'footerCopy') {
             el.textContent = `© ${new Date().getFullYear()} ${s.site_name}. All rights reserved.`;
+          } else if (el.tagName === 'IMG') {
+            // For image logos: only update alt text, never textContent (would clobber the <img/>)
+            el.setAttribute('alt', s.site_name);
           } else {
             el.textContent = s.site_name;
           }
         });
+        // Update document title's site-name suffix if needed (best-effort)
+        try {
+          const t = document.title;
+          if (t && t.indexOf('|') === -1 && t.indexOf(' - ') === -1) {
+            // leave alone
+          }
+        } catch(e) {}
       }
       // Footer tagline
       if (s.site_description) {

@@ -23,8 +23,12 @@ export function homePage(data: {
 <section class="hero-slider" id="heroSlider">
   ${heroItems.map((f, i) => `
   <div class="hero-slide${i === 0 ? ' active' : ''}" data-index="${i}">
-    <img src="${f.banner_image || f.cover_image || ''}" 
-         alt="${f.title}" class="hero-bg-img" loading="${i === 0 ? 'eager' : 'lazy'}"
+    <img src="${f.banner_image || f.cover_image || ''}"
+         alt="${f.title}" class="hero-bg-img"
+         loading="${i === 0 ? 'eager' : 'lazy'}"
+         decoding="async"
+         ${i === 0 ? 'fetchpriority="high"' : ''}
+         width="1280" height="560"
          onerror="this.style.opacity='0'">
     <div class="hero-gradient"></div>
     <div class="hero-content">

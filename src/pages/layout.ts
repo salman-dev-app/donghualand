@@ -51,9 +51,75 @@ ${siteUrl ? `<meta property="og:url" content="${siteUrl}">` : ''}
 <link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="image" href="/static/logo.png" fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/static/style.css">
+<!-- Critical inline CSS — prevents FOUC (Flash of Unstyled Content)
+     Must contain enough rules to make header/logo/main render correctly
+     even before /static/style.css finishes loading. -->
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#080810;color:#e8e8f0;min-height:100vh;overflow-x:hidden;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{text-decoration:none;color:inherit}
+  button{cursor:pointer;border:none;background:none;font-family:inherit}
+  img{display:block;max-width:100%}
+  .site-header{position:fixed;top:0;left:0;right:0;height:64px;z-index:1000;background:rgba(8,8,16,0.85);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.05)}
+  .header-inner{max-width:1440px;margin:0 auto;height:100%;display:flex;align-items:center;gap:12px;padding:0 20px}
+  .logo{display:flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap}
+  .site-logo-img{height:40px;width:auto;max-width:180px;max-height:40px;object-fit:contain;display:block}
+  .footer-logo-img{height:36px;max-width:160px;max-height:36px}
+  .site-main{margin-top:64px;min-height:60vh}
+  .hidden{display:none !important}
+  /* Logged-in user wrap is hidden by default until JS confirms auth */
+  #userMenuWrap.hidden{display:none !important}
+  /* CRITICAL: Hide drawer / search overlay / share modal / PWA modal by default so they
+     never flash inline in the document flow before /static/style.css arrives.
+     They are absolutely / fixed positioned via the main stylesheet; using
+     position:fixed + visibility:hidden here removes them from the visible flow. */
+  .mob-drawer{position:fixed;top:0;right:0;bottom:0;width:300px;max-width:85vw;z-index:1100;transform:translateX(100%);visibility:hidden}
+  .mob-drawer.open{transform:translateX(0);visibility:visible}
+  .search-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.65);visibility:hidden;opacity:0}
+  .search-overlay.open{visibility:visible;opacity:1}
+  .share-modal-backdrop{position:fixed;inset:0;z-index:3000;visibility:hidden;opacity:0;pointer-events:none}
+  .share-modal-backdrop.open{visibility:visible;opacity:1;pointer-events:auto}
+  #pwaInstallModal{position:fixed;inset:0;z-index:99999;pointer-events:none;visibility:hidden}
+  #pwaInstallModal.open{pointer-events:auto;visibility:visible}
+  /* PWA FAB hidden by default — JS shows it only after install prompt is captured */
+  .pwa-fab{display:none}
+  /* Toast container should never push layout */
+  .toast-container{position:fixed;bottom:20px;right:20px;z-index:5000;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+  /* Dropdown menus / autocomplete drops must be hidden by default — never flash inline */
+  .nav-dropdown-menu,.user-drop,.h-search-drop,.search-overlay-drop{display:none}
+  .nav-dropdown:hover .nav-dropdown-menu,.user-wrap.open .user-drop,.h-search-drop.show,.search-overlay-drop.show{display:block}
+  /* Header search bar hidden by default — toggled by JS */
+  .header-search{display:none}
+  .header-search.open{display:block}
+  /* Mobile-only / desktop-only baselines (avoid both showing before CSS) */
+  .mob-search-btn,.mob-auth-btn,.mob-btn{display:none}
+  .desktop-search-btn,.btn-signin,.btn-join{display:inline-flex}
+  @media (max-width:768px){
+    .desktop-search-btn,.btn-signin,.btn-join{display:none}
+    .mob-search-btn,.mob-auth-btn,.mob-btn{display:inline-flex;align-items:center;justify-content:center}
+  }
+  /* Stable hero/player aspect ratio so layout never collapses while loading */
+  .hero-slider{position:relative;width:100%;height:560px;max-height:80vh;overflow:hidden;background:#0a0a14}
+  .player-box{position:relative;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;margin-bottom:14px;width:100%}
+  .watch-wrap{max-width:960px;margin:0 auto;padding:16px 20px 40px;min-height:50vh}
+  /* Bottom nav baseline so it never explodes on mobile before CSS arrives */
+  .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:62px;z-index:998;background:#0d0d18;border-top:1px solid rgba(255,255,255,0.05)}
+  @media (max-width:768px){
+    .site-header{height:58px}
+    .site-main{margin-top:58px;padding-bottom:62px}
+    .bottom-nav{display:flex}
+    .header-inner{padding:0 12px;gap:7px}
+    .site-logo-img{height:34px;max-height:34px;max-width:150px}
+    .hero-slider{height:340px;max-height:340px;min-height:290px}
+    .watch-wrap{padding:0;min-height:50vh}
+    .player-box{border-radius:0}
+  }
+</style>
 ${extraHead}
 </head>
 <body>
@@ -62,9 +128,12 @@ ${extraHead}
 <header class="site-header" id="siteHeader">
   <div class="header-inner">
 
-    <!-- Logo -->
-    <a href="/" class="logo">
-      <img src="/static/logo.png" alt="${siteName}" class="site-logo-img" id="headerSiteName">
+    <!-- Logo — width/height attrs prevent FOUC oversizing before CSS loads -->
+    <a href="/" class="logo" aria-label="${siteName}">
+      <img src="/static/logo.png" alt="${siteName}" class="site-logo-img" id="headerSiteName"
+           width="100" height="40" decoding="async" fetchpriority="high"
+           style="height:40px;width:auto;max-width:180px;max-height:40px;object-fit:contain;display:block"
+           onerror="this.onerror=null;this.style.display='none';">
     </a>
 
     <!-- Search bar (desktop: hidden until search icon clicked) -->
@@ -203,8 +272,11 @@ ${content}
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
-        <a href="/" class="footer-logo">
-          <img src="/static/logo.png" alt="${siteName}" class="site-logo-img footer-logo-img" id="footerSiteName">
+        <a href="/" class="footer-logo" aria-label="${siteName}">
+          <img src="/static/logo.png" alt="${siteName}" class="site-logo-img footer-logo-img" id="footerSiteName"
+               width="90" height="36" decoding="async" loading="lazy"
+               style="height:36px;width:auto;max-width:160px;max-height:36px;object-fit:contain;display:block"
+               onerror="this.onerror=null;this.style.display='none';">
         </a>
         <p class="footer-tagline" id="footerTagline">Your ultimate destination for anime streaming.<br>Free, HD, updated daily.</p>
         <div class="footer-social" id="footerSocial">
@@ -496,11 +568,17 @@ ${content}
     var titleEl = document.getElementById('pwaModalTitle');
     if (titleEl) {
       var pageTitle = document.title.split('|')[0].split('-')[0].trim();
-      // Use site name from header if available
+      // headerSiteName is an <img>; use its alt attribute as the site name
       var headerName = document.getElementById('headerSiteName');
-      titleEl.textContent = (headerName && headerName.textContent.trim())
-        ? headerName.textContent.trim()
-        : pageTitle;
+      var siteName = '';
+      if (headerName) {
+        if (headerName.tagName === 'IMG') {
+          siteName = (headerName.getAttribute('alt') || '').trim();
+        } else {
+          siteName = (headerName.textContent || '').trim();
+        }
+      }
+      titleEl.textContent = siteName || pageTitle;
     }
     modal.style.display = 'block';
     requestAnimationFrame(function () {

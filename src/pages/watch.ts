@@ -11,16 +11,19 @@ export function watchPage(data: { anime: any, episode: any, allEpisodes: any[], 
 
   let playerHTML = ''
   if (hasEmbed) {
-    playerHTML = `<iframe 
-      src="${episode.embed_url}" 
-      allowfullscreen 
+    playerHTML = `<iframe
+      src="${episode.embed_url}"
       allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
       scrolling="no"
       frameborder="0"
-      style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+      loading="eager"
+      referrerpolicy="no-referrer-when-downgrade"
+      style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;background:#000;"
+      title="Episode ${episode.episode_number} player"
     ></iframe>`
   } else if (hasVideo) {
-    playerHTML = `<video controls style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;">
+    playerHTML = `<video controls preload="metadata" playsinline
+      style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;">
       <source src="${episode.video_url}" type="video/mp4">
       Your browser does not support video playback.
     </video>`
@@ -51,14 +54,15 @@ ${breadcrumb([
   { label: `Episode ${episode.episode_number}` }
 ])}
 
-<div class="watch-wrap">
+<div class="watch-wrap" style="max-width:960px;margin:0 auto;min-height:50vh;">
 
   <!-- ====== VIDEO PLAYER SECTION ====== -->
   <div class="player-section">
 
-    <!-- Video Player Box -->
-    <div class="player-box" id="playerBox">
-      <div style="position:relative; width:100%; height:100%;">
+    <!-- Video Player Box — inline styles prevent collapse on slow/CSS-less load -->
+    <div class="player-box" id="playerBox"
+         style="position:relative;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;margin-bottom:14px;width:100%;">
+      <div style="position:absolute;inset:0;">
         ${playerHTML}
       </div>
     </div>
@@ -153,7 +157,9 @@ ${breadcrumb([
                title="${title}">
               <div class="cr-ep-thumb-wrap">
                 <img src="${thumb}" alt="EP ${ep.episode_number}" class="cr-ep-thumb"
-                     onerror="this.parentElement.style.background='var(--bg5)'">
+                     loading="lazy" decoding="async"
+                     width="112" height="63"
+                     onerror="this.style.display='none';this.parentElement.style.background='var(--bg5)';">
                 ${isActive ? `<div class="cr-ep-playing"><i class="fas fa-volume-up"></i></div>` : ''}
                 <div class="cr-ep-num-badge">EP ${ep.episode_number}</div>
               </div>
@@ -1008,6 +1014,9 @@ window.loadMoreComments = function() {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  /* Allow modal content to scroll if shorter viewport */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   /* Start invisible & non-interactive */
   visibility: hidden;
   opacity: 0;
